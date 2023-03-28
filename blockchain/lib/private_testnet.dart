@@ -1,8 +1,8 @@
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/utils.dart';
 import 'package:bifrost_crypto/kes.dart';
-import 'package:bifrost_node/genesis.dart';
-import 'package:bifrost_node/staker_initializer.dart';
+import 'package:bifrost_blockchain/genesis.dart';
+import 'package:bifrost_blockchain/staker_initializer.dart';
 import 'package:cryptography/cryptography.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:rational/rational.dart';

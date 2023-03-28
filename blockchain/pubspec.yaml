@@ -1,5 +1,5 @@
-name: bifrost_node
-description: Bifrost node
+name: bifrost_blockchain
+description: Bifrost blockchain
 
 publish_to: 'none'
 
@@ -12,6 +12,7 @@ environment:
 
 dependencies:
   args: ^2.3.1
+  async:
   fixnum:
   fpdart:
   rational:
@@ -33,7 +34,5 @@ dependencies:
     path: ../p2p
   bifrost_crypto:
     path: ../crypto
-  bifrost_blockchain:
-    path: ../blockchain
 dev_dependencies:    
   build_runner: ^1.10.3

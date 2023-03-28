@@ -80,9 +80,9 @@ class DataStores {
     await stores.bodies.put(
       genesisBlockId,
       BlockBody(
-          transactionIds: genesisBlock.fullBody.transaction.map((t) => t.id)),
+          transactionIds: genesisBlock.fullBody.transactions.map((t) => t.id)),
     );
-    for (final transaction in genesisBlock.fullBody.transaction) {
+    for (final transaction in genesisBlock.fullBody.transactions) {
       await stores.transactions.put(transaction.id, transaction);
     }
     await stores.blockHeightTree

@@ -49,7 +49,7 @@ class GenesisConfig {
 
     return FullBlock(
       header: header,
-      fullBody: FullBlockBody(transaction: transactions),
+      fullBody: FullBlockBody(transactions: transactions),
     );
   }
 }
