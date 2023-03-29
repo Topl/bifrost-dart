@@ -114,7 +114,7 @@ class BlockProducer extends BlockProducerAlgebra {
       if (updated != null)
         body = updated;
       else
-        await Future.delayed(Duration(milliseconds: 100));
+        await Future.delayed(Duration(milliseconds: 50));
       c = isCanceled();
     }
     if (c) return null;

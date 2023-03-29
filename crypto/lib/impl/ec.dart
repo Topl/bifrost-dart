@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:bifrost_crypto/impl/x25519_field.dart';
 import 'package:fixnum/fixnum.dart';
 
@@ -86,7 +88,7 @@ class EC {
       c >>>= 32;
       zc += c + zz[i + 8] & M;
       zz[i + 8] = zc.toInt32().toInt();
-      zc = zc.shiftRightUnsigned(32); // TODO: >>>?
+      zc = zc.shiftRightUnsigned(32);
     }
     return zc.toInt32().toInt();
   }
@@ -118,7 +120,7 @@ class EC {
     for (int i = 0; i < len; i++) {
       c += (x[i] & M) + (y[i] & m);
       z[i] = c.toInt32().toInt();
-      c = c.shiftRightUnsigned(32); // TODO: >>>?
+      c = c.shiftRightUnsigned(32);
     }
     return c.toInt32().toInt();
   }
@@ -203,7 +205,7 @@ class EC {
     final py = p.sublist(pOff, pOff + POINT_BYTES);
     if (!checkPointVar(py)) return false;
     final x_0 = (py[POINT_BYTES - 1] & 0x80) >>> 7;
-    py[POINT_BYTES - 1] = (py[POINT_BYTES - 1] & 0x7f);
+    py[POINT_BYTES - 1] = (py[POINT_BYTES - 1] & 0x7f).toByte;
     x25519Field.decode(py, 0, r.y);
     final u = x25519Field.create;
     final v = x25519Field.create;
@@ -223,22 +225,21 @@ class EC {
       decode32(k, kOff, n, 0, SCALAR_INTS);
 
   void encode24(int n, List<int> bs, int off) {
-    bs[off] = n; // TODO: toByte
-    bs[off + 1] = (n >>> 8); // TODO: toByte
-    bs[off + 2] = n >>> 16; // TODO: toByte
+    bs[off] = n.toByte;
+    bs[off + 1] = (n >>> 8).toByte;
+    bs[off + 2] = (n >>> 16).toByte;
   }
 
   void encode32(int n, List<int> bs, int off) {
-    bs[off] = n; // TODO: toByte
-    bs[off + 1] = n >>> 8; // TODO: toByte
-    bs[off + 2] = n >>> 16; // TODO: toByte
-    bs[off + 3] = n >>> 24; // TODO: toByte
+    bs[off] = n.toByte;
+    bs[off + 1] = (n >>> 8).toByte;
+    bs[off + 2] = (n >>> 16).toByte;
+    bs[off + 3] = (n >>> 24).toByte;
   }
 
   void encode56(Int64 n, List<int> bs, int off) {
     encode32(n.toInt32().toInt(), bs, off);
-    encode24(
-        (n.shiftRightUnsigned(32)).toInt32().toInt(), bs, off + 4); // TODO: >>>
+    encode24((n.shiftRightUnsigned(32)).toInt32().toInt(), bs, off + 4);
   }
 
   void encodePoint(PointAccum p, List<int> r, int rOff) {
@@ -251,7 +252,7 @@ class EC {
     x25519Field.normalize(y);
     x25519Field.encode(y, r, rOff);
     r[rOff + POINT_BYTES - 1] =
-        (r[rOff + POINT_BYTES - 1] | ((x[0] & 1) << 7)); // TODO: toByte
+        (r[rOff + POINT_BYTES - 1] | ((x[0] & 1) << 7)).toByte;
   }
 
   List<int> getWNAF(List<int> n, int width) {
@@ -284,7 +285,7 @@ class EC {
           carry = digit & sign;
           digit -= (carry << 1);
           carry >>>= (width - 1);
-          ws[(i << 4) + j] = digit;
+          ws[(i << 4) + j] = digit.toByte;
           j += width;
         }
       }
@@ -566,11 +567,11 @@ class EC {
 
   void pruneScalar(List<int> n, int nOff, List<int> r) {
     for (int i = 0; i < SCALAR_BYTES; i++) {
-      r[i] = n[nOff + i];
+      r[i] = n[nOff + i].toByte;
     }
     r[0] = (r[0] & 0xf8);
-    r[SCALAR_BYTES - 1] = r[SCALAR_BYTES - 1] & 0x7f; // TODO: toByte
-    r[SCALAR_BYTES - 1] = r[SCALAR_BYTES - 1] & 0x40; // TODO: toByte
+    r[SCALAR_BYTES - 1] = (r[SCALAR_BYTES - 1] & 0x7f).toByte;
+    r[SCALAR_BYTES - 1] = (r[SCALAR_BYTES - 1] & 0x40).toByte;
   }
 
   List<int> reduceScalar(List<int> n) {
@@ -655,7 +656,7 @@ class EC {
     x07 &= M28L; // x08:56/53, x07:28/--
     x09 += (x08 >> 28);
     x08 &= M28L; // x09:29/25, x08:28/--
-    t = x08.shiftRightUnsigned(27); // TODO: >>>
+    t = x08.shiftRightUnsigned(27);
     x09 += t; // x09:29/26
     x00 -= x09 * L0; // x00:55/53
     x01 -= x09 * L1; // x01:55/54
@@ -933,4 +934,8 @@ class PointPrecomp {
         x25519Field.create,
         x25519Field.create,
       );
+}
+
+extension IntOps on int {
+  int get toByte => (ByteData(1)..setInt8(0, this)).buffer.asInt8List()[0];
 }

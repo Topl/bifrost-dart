@@ -148,9 +148,9 @@ class Ed25519VRF {
 
   _pruneHash(List<int> s) async {
     final h = await _sha512Signed(s);
-    h[0] = h[0] & 0xf8;
-    h[EC.SCALAR_BYTES - 1] = h[EC.SCALAR_BYTES - 1] & 0x7f;
-    h[EC.SCALAR_BYTES - 1] = h[EC.SCALAR_BYTES - 1] | 0x40;
+    h[0] = (h[0] & 0xf8).toByte;
+    h[EC.SCALAR_BYTES - 1] = (h[EC.SCALAR_BYTES - 1] & 0x7f).toByte;
+    h[EC.SCALAR_BYTES - 1] = (h[EC.SCALAR_BYTES - 1] | 0x40).toByte;
     return h;
   }
 
@@ -163,7 +163,7 @@ class Ed25519VRF {
     final HR = PointAccum.fromField(ec.x25519Field);
     bool isPoint = false;
     while (!isPoint) {
-      final ctr_byte = [ctr];
+      final ctr_byte = [ctr.toByte];
       final input = <int>[]
         ..addAll(suite)
         ..addAll(one)

@@ -1,3 +1,4 @@
+import 'package:bifrost_crypto/impl/ec.dart';
 import 'package:fixnum/fixnum.dart';
 
 /**
@@ -176,10 +177,10 @@ class X25519Field {
   }
 
   void encode32(int n, List<int> bs, int off) {
-    bs[off + 0] = n;
-    bs[off + 1] = n >> 8;
-    bs[off + 2] = n >> 16;
-    bs[off + 3] = n >> 24;
+    bs[off + 0] = n.toByte;
+    bs[off + 1] = (n >>> 8).toByte;
+    bs[off + 2] = (n >>> 16).toByte;
+    bs[off + 3] = (n >>> 24).toByte;
   }
 
   void inv(List<int> x, List<int> z) {
