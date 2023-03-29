@@ -55,10 +55,10 @@ class Ed25519 {
     final h = Uint8List.fromList((await c.Sha512().hash(sk)).bytes)
         .int8List
         .sublist(0, 32);
-    final s = List.filled(EC.SCALAR_BYTES, 0x00, growable: false);
+    final s = Int8List(EC.SCALAR_BYTES);
     ec.pruneScalar(h, 0, s);
     final vk = List.filled(32, 0x00, growable: false);
-    ec.scalarMultBaseEncoded(s, vk, 0);
+    ec.scalarMultBaseEncoded(s, Int8List.fromList(vk), 0);
     return vk;
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:bifrost_crypto/impl/ec.dart';
 import 'package:fixnum/fixnum.dart';
 
@@ -15,7 +17,7 @@ class X25519Field {
   static const M24 = 0x00ffffff;
   static const M25 = 0x01ffffff;
   static const M26 = 0x03ffffff;
-  static const ROOT_NEG_ONE = [
+  static final ROOT_NEG_ONE = Int32List.fromList([
     0x020ea0b0,
     0x0386c9d2,
     0x00478c4e,
@@ -26,32 +28,32 @@ class X25519Field {
     0x01f0b2b4,
     0x00027e0e,
     0x00570649
-  ];
+  ]);
 
-  void add(List<int> x, List<int> y, List<int> z) {
+  void add(Int32List x, Int32List y, Int32List z) {
     for (int i = 0; i < SIZE; i++) {
       z[i] = x[i] + y[i];
     }
   }
 
-  void addOne1(List<int> z) {
+  void addOne1(Int32List z) {
     z[0] += 1;
   }
 
-  void addOne2(List<int> z, int zOff) {
+  void addOne2(Int32List z, int zOff) {
     z[zOff] += 1;
   }
 
-  void apm(List<int> x, List<int> y, List<int> zp, List<int> zm) {
+  void apm(Int32List x, Int32List y, Int32List zp, Int32List zm) {
     for (int i = 0; i < SIZE; i++) {
       final xi = x[i];
       final yi = y[i];
-      zp[i] = xi + yi;
-      zp[i] = xi - yi;
+      zp[i] = (Int32(xi) + yi).toInt();
+      zm[i] = (Int32(xi) - yi).toInt();
     }
   }
 
-  void carry(List<int> z) {
+  void carry(Int32List z) {
     var z0 = z[0];
     var z1 = z[1];
     var z2 = z[2];
@@ -94,7 +96,7 @@ class X25519Field {
     z[9] = z9;
   }
 
-  void cmov(int cond, List<int> x, int xOff, List<int> z, int zOff) {
+  void cmov(int cond, Int32List x, int xOff, Int32List z, int zOff) {
     for (int i = 0; i < SIZE; i++) {
       int z_i = z[zOff + i];
       final diff = z_i ^ x[xOff + i];
@@ -103,64 +105,67 @@ class X25519Field {
     }
   }
 
-  void cnegate(int negate, List<int> z) {
-    final mask = 0 - negate;
+  void cnegate(Int32 negate, Int32List z) {
+    final mask = (Int32.ZERO - negate).toInt32();
     for (int i = 0; i < SIZE; i++) {
-      z[i] = (z[i] ^ mask) - mask;
+      z[i] = ((Int32(z[i]) ^ mask) - mask).toInt32().toInt();
     }
   }
 
-  void copy(List<int> x, int xOff, List<int> z, int zOff) {
+  void copy(Int32List x, int xOff, Int32List z, int zOff) {
     for (int i = 0; i < SIZE; i++) {
       z[zOff + i] = x[xOff + i];
     }
   }
 
-  void cswap(int swap, List<int> a, List<int> b) {
-    final mask = 0 - swap;
+  void cswap(Int32 swap, Int32List a, Int32List b) {
+    final mask = Int32.ZERO - swap;
     for (int i = 0; i < SIZE; i++) {
-      final ai = a[i];
-      final bi = b[i];
+      final ai = Int32(a[i]);
+      final bi = Int32(b[i]);
       final dummy = mask & (ai ^ bi);
-      a[i] = ai ^ dummy;
-      b[i] = bi ^ dummy;
+      a[i] = (ai ^ dummy).toInt();
+      b[i] = (bi ^ dummy).toInt();
     }
   }
 
-  List<int> get create => List.filled(SIZE, 0, growable: false);
+  Int32List get create => Int32List(SIZE);
 
-  void decode(List<int> x, int xOff, List<int> z) {
+  void decode(Int8List x, int xOff, Int32List z) {
     decode128(x, xOff, z, 0);
     decode128(x, xOff + 16, z, 5);
     z[9] &= M24;
   }
 
-  void decode128(List<int> bs, int off, List<int> z, zOff) {
+  void decode128(Int8List bs, int off, Int32List z, zOff) {
     final t0 = decode32(bs, off + 0);
     final t1 = decode32(bs, off + 4);
     final t2 = decode32(bs, off + 8);
     final t3 = decode32(bs, off + 12);
-    z[zOff + 0] = t0 & M26;
-    z[zOff + 1] = ((t1 << 6) | (t0 >>> 26)) & M26;
-    z[zOff + 2] = ((t2 << 12) | (t1 >>> 20)) & M25;
-    z[zOff + 3] = ((t3 << 19) | (t2 >>> 13)) & M26;
-    z[zOff + 4] = t3 >>> 7;
+    z[zOff + 0] = (t0 & M26).toInt32().toInt();
+    z[zOff + 1] =
+        (((t1 << 6) | (t0.shiftRightUnsigned(26))) & M26).toInt32().toInt();
+    z[zOff + 2] =
+        (((t2 << 12) | (t1.shiftRightUnsigned(20))) & M25).toInt32().toInt();
+    z[zOff + 3] =
+        (((t3 << 19) | (t2.shiftRightUnsigned(13))) & M26).toInt32().toInt();
+    z[zOff + 4] = t3.shiftRightUnsigned(7).toInt32().toInt();
   }
 
-  int decode32(List<int> bs, int off) {
-    int n = bs[off] & 0xff;
-    n |= (bs[off + 1] & 0xff) << 8;
-    n |= (bs[off + 2] & 0xff) << 16;
-    n |= (bs[off + 3] & 0xff) << 24;
+  Int32 decode32(Int8List bs, int off) {
+    var n = Int32(bs[off]) & 0xff;
+    n |= (bs[off + 1] & 0xff).toByte << 8;
+    n |= (bs[off + 2] & 0xff).toByte << 16;
+    n |= (bs[off + 3] & 0xff).toByte << 24;
     return n;
   }
 
-  void encode(List<int> x, List<int> z, int zOff) {
+  void encode(Int32List x, Int8List z, int zOff) {
     encode128(x, 0, z, zOff);
     encode128(x, 5, z, zOff + 16);
   }
 
-  void encode128(List<int> x, int xOff, List<int> bs, int off) {
+  void encode128(Int32List x, int xOff, Int8List bs, int off) {
     final x0 = x[xOff + 0];
     final x1 = x[xOff + 1];
     final x2 = x[xOff + 2];
@@ -176,14 +181,14 @@ class X25519Field {
     encode32(t3, bs, off + 12);
   }
 
-  void encode32(int n, List<int> bs, int off) {
+  void encode32(int n, Int8List bs, int off) {
     bs[off + 0] = n.toByte;
     bs[off + 1] = (n >>> 8).toByte;
     bs[off + 2] = (n >>> 16).toByte;
     bs[off + 3] = (n >>> 24).toByte;
   }
 
-  void inv(List<int> x, List<int> z) {
+  void inv(Int32List x, Int32List z) {
     // (250 1s) (1 0s) (1 1s) (1 0s) (2 1s)
     // Addition chain: [1] [2] 3 5 10 15 25 50 75 125 [250]
     final x2 = create;
@@ -193,16 +198,16 @@ class X25519Field {
     mul2(t, x2, z);
   }
 
-  int isZero(List<int> x) {
-    int d = 0;
+  Int32 isZero(Int32List x) {
+    Int32 d = Int32.ZERO;
     for (int i = 0; i < SIZE; i++) d |= x[i];
-    d = (d >>> 1) | (d & 1);
-    return (d - 1) >> 31;
+    d = (d.shiftRightUnsigned(1)) | (d & 1);
+    return ((d - 1) >> 31).toInt32();
   }
 
-  bool isZeroVar(List<int> x) => 0 != isZero(x);
+  bool isZeroVar(Int32List x) => 0 != isZero(x);
 
-  void mul1(List<int> x, int y, List<int> z) {
+  void mul1(Int32List x, int y, Int32List z) {
     final x0 = x[0];
     final x1 = x[1];
     var x2 = x[2];
@@ -254,7 +259,7 @@ class X25519Field {
     z[9] = x9 + c2.toInt32().toInt();
   }
 
-  void mul2(List<int> x, List<int> y, List<int> z) {
+  void mul2(Int32List x, Int32List y, Int32List z) {
     var x0 = x[0];
     var y0 = y[0];
     var x1 = x[1];
@@ -343,61 +348,61 @@ class X25519Field {
     final c7 = Int64(x3) * y4 + Int64(x4) * y3;
     var c8 = Int64(x4) * y4;
     c8 <<= 1;
-    var z8 = 0;
-    var z9 = 0;
+    var z8 = Int32.ZERO;
+    var z9 = Int32.ZERO;
     var t = Int64(0);
     t = a8 + (c3 - a3);
-    z8 = t.toInt32().toInt() & M26;
+    z8 = t.toInt32() & M26;
     t >>= 26;
     t += (c4 - a4) - b4;
-    z9 = t.toInt32().toInt() & M25;
+    z9 = t.toInt32() & M25;
     t >>= 25;
     t = a0 + (t + c5 - a5) * 38;
-    z[0] = t.toInt32().toInt() & M26;
+    z[0] = (t.toInt32() & M26).toInt();
     t >>= 26;
     t += a1 + (c6 - a6) * 38;
-    z[1] = t.toInt32().toInt() & M26;
+    z[1] = (t.toInt32() & M26).toInt();
     t >>= 26;
     t += a2 + (c7 - a7) * 38;
-    z[2] = t.toInt32().toInt() & M25;
+    z[2] = (t.toInt32() & M25).toInt();
     t >>= 25;
     t += a3 + (c8 - a8) * 38;
-    z[3] = t.toInt32().toInt() & M26;
+    z[3] = (t.toInt32() & M26).toInt();
     t >>= 26;
     t += a4 + b4 * 38;
-    z[4] = t.toInt32().toInt() & M25;
+    z[4] = (t.toInt32() & M25).toInt();
     t >>= 25;
     t += a5 + (c0 - a0);
-    z[5] = t.toInt32().toInt() & M26;
+    z[5] = (t.toInt32() & M26).toInt();
     t >>= 26;
     t += a6 + (c1 - a1);
-    z[6] = t.toInt32().toInt() & M26;
+    z[6] = (t.toInt32() & M26).toInt();
     t >>= 26;
     t += a7 + (c2 - a2);
-    z[7] = t.toInt32().toInt() & M25;
+    z[7] = (t.toInt32() & M25).toInt();
     t >>= 25;
     t += z8;
-    z[8] = t.toInt32().toInt() & M26;
+    z[8] = (t.toInt32() & M26).toInt();
     t >>= 26;
-    z[9] = z9 + t.toInt32().toInt();
+    z[9] = (z9 + t).toInt32().toInt();
   }
 
-  void negate(List<int> x, List<int> z) {
+  void negate(Int32List x, Int32List z) {
     for (int i = 0; i < SIZE; i++) z[i] = -x[i];
   }
 
-  void normalize(List<int> z) {
-    final x = (z[9] >>> 23) & 1;
+  void normalize(Int32List z) {
+    final x = Int32(z[9] >>> 23) & 1;
     reduce(z, x);
     reduce(z, -x);
   }
 
-  void one(List<int> z) {
+  void one(Int32List z) {
     z[0] = 1;
     for (int i = 1; i < SIZE; i++) z[i] = 0;
   }
 
-  void powPm5d8(List<int> x, List<int> rx2, List<int> rz) {
+  void powPm5d8(Int32List x, Int32List rx2, Int32List rz) {
     // (250 1s) (1 0s) (1 1s)
     // Addition chain: [1] 2 3 5 10 15 25 50 75 125 [250]
     final x2 = rx2;
@@ -435,45 +440,45 @@ class X25519Field {
     mul2(t, x, rz);
   }
 
-  void reduce(List<int> z, int c) {
-    var z9 = z[9];
+  void reduce(Int32List z, Int32 c) {
+    var z9 = Int32(z[9]);
     var t = z9;
-    z9 = t & M24;
+    z9 = (t & M24).toInt32();
     t >>= 24;
-    t += c;
-    t *= 19;
-    t += z[0];
-    z[0] = t & M26;
+    t = (t + c).toInt32();
+    t = (t * 19).toInt32();
+    t = (t + z[0]).toInt32();
+    z[0] = (t & M26).toInt();
     t >>= 26;
-    t += z[1];
-    z[1] = t & M26;
+    t = (t + z[1]).toInt32();
+    z[1] = (t & M26).toInt();
     t >>= 26;
-    t += z[2];
-    z[2] = t & M25;
+    t = (t + z[2]).toInt32();
+    z[2] = (t & M25).toInt();
     t >>= 25;
-    t += z[3];
-    z[3] = t & M26;
+    t = (t + z[3]).toInt32();
+    z[3] = (t & M26).toInt();
     t >>= 26;
-    t += z[4];
-    z[4] = t & M25;
+    t = (t + z[4]).toInt32();
+    z[4] = (t & M25).toInt();
     t >>= 25;
-    t += z[5];
-    z[5] = t & M26;
+    t = (t + z[5]).toInt32();
+    z[5] = (t & M26).toInt();
     t >>= 26;
-    t += z[6];
-    z[6] = t & M26;
+    t = (t + z[6]).toInt32();
+    z[6] = (t & M26).toInt();
     t >>= 26;
-    t += z[7];
-    z[7] = t & M25;
+    t = (t + z[7]).toInt32();
+    z[7] = (t & M25).toInt();
     t >>= 25;
-    t += z[8];
-    z[8] = t & M26;
+    t = (t + z[8]).toInt32();
+    z[8] = (t & M26).toInt();
     t >>= 26;
-    t += z9;
-    z[9] = t;
+    t = (t + z9).toInt32();
+    z[9] = t.toInt();
   }
 
-  void sqr(List<int> x, List<int> z) {
+  void sqr(Int32List x, Int32List z) {
     var x0 = x[0];
     var x1 = x[1];
     var x2 = x[2];
@@ -575,7 +580,7 @@ class X25519Field {
     z[9] = z9 + t.toInt32().toInt();
   }
 
-  void sqr2(List<int> x, int n, List<int> z) {
+  void sqr2(Int32List x, int n, Int32List z) {
     int nv = n;
     sqr(x, z);
     while (--nv > 0) {
@@ -583,7 +588,7 @@ class X25519Field {
     }
   }
 
-  bool sqrtRatioVar(List<int> u, List<int> v, List<int> z) {
+  bool sqrtRatioVar(Int32List u, Int32List v, Int32List z) {
     final uv3 = create;
     final uv7 = create;
     mul2(u, v, uv3);
@@ -613,15 +618,15 @@ class X25519Field {
     return false;
   }
 
-  void sub(List<int> x, List<int> y, List<int> z) {
+  void sub(Int32List x, Int32List y, Int32List z) {
     for (int i = 0; i < SIZE; i++) z[i] = x[i] - y[i];
   }
 
-  void subOne(List<int> z) {
+  void subOne(Int32List z) {
     z[0] -= 1;
   }
 
-  void zero(List<int> z) {
+  void zero(Int32List z) {
     for (int i = 0; i < SIZE; i++) z[i] = 0;
   }
 }

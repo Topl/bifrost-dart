@@ -42,50 +42,50 @@ Table 1: Parameters of Ed25519
  */
 class EC {
   final x25519Field = X25519Field();
-  List<PointExt> _precompBaseTable = [];
-  List<int> _precompBase = [];
+  late List<PointExt> _precompBaseTable;
+  late Int32List _precompBase;
 
   EC() {
     _precompute();
   }
 
-  int mulAddTo256(List<int> x, List<int> y, List<int> zz) {
-    final y_0 = y[0] & M;
-    final y_1 = y[1] & M;
-    final y_2 = y[2] & M;
-    final y_3 = y[3] & M;
-    final y_4 = y[4] & M;
-    final y_5 = y[5] & M;
-    final y_6 = y[6] & M;
-    final y_7 = y[7] & M;
+  int mulAddTo256(Int32List x, Int32List y, Int32List zz) {
+    final y_0 = Int64(y[0]) & M;
+    final y_1 = Int64(y[1]) & M;
+    final y_2 = Int64(y[2]) & M;
+    final y_3 = Int64(y[3]) & M;
+    final y_4 = Int64(y[4]) & M;
+    final y_5 = Int64(y[5]) & M;
+    final y_6 = Int64(y[6]) & M;
+    final y_7 = Int64(y[7]) & M;
     Int64 zc = Int64.ZERO;
     for (int i = 0; i < 8; i++) {
-      int c = 0;
-      final x_i = x[i] & M;
-      c += x_i * y_0 + (zz[i + 0] & M);
-      zz[i + 0] = c;
-      c >>>= 32;
-      c += x_i * y_1 + (zz[i + 1] & M);
-      zz[i + 1] = c;
-      c >>>= 32;
-      c += x_i * y_2 + (zz[i + 2] & M);
-      zz[i + 2] = c;
-      c >>>= 32;
-      c += x_i * y_3 + (zz[i + 3] & M);
-      zz[i + 3] = c;
-      c >>>= 32;
-      c += x_i * y_4 + (zz[i + 4] & M);
-      zz[i + 4] = c;
-      c >>>= 32;
-      c += x_i * y_5 + (zz[i + 5] & M);
-      zz[i + 5] = c;
-      c >>>= 32;
-      c += x_i * y_6 + (zz[i + 6] & M);
-      zz[i + 6] = c;
-      c >>>= 32;
-      c += x_i * y_7 + (zz[i + 7] & M);
-      zz[i + 7] = c;
-      c >>>= 32;
+      var c = Int64.ZERO;
+      final x_i = Int64(x[i]) & M;
+      c += x_i * y_0 + (Int64(zz[i + 0]) & M);
+      zz[i + 0] = c.toInt32().toInt();
+      c = c.shiftRightUnsigned(32);
+      c += x_i * y_1 + (Int64(zz[i + 1]) & M);
+      zz[i + 1] = c.toInt32().toInt();
+      c = c.shiftRightUnsigned(32);
+      c += x_i * y_2 + (Int64(zz[i + 2]) & M);
+      zz[i + 2] = c.toInt32().toInt();
+      c = c.shiftRightUnsigned(32);
+      c += x_i * y_3 + (Int64(zz[i + 3]) & M);
+      zz[i + 3] = c.toInt32().toInt();
+      c = c.shiftRightUnsigned(32);
+      c += x_i * y_4 + (Int64(zz[i + 4]) & M);
+      zz[i + 4] = c.toInt32().toInt();
+      c = c.shiftRightUnsigned(32);
+      c += x_i * y_5 + (Int64(zz[i + 5]) & M);
+      zz[i + 5] = c.toInt32().toInt();
+      c = c.shiftRightUnsigned(32);
+      c += x_i * y_6 + (Int64(zz[i + 6]) & M);
+      zz[i + 6] = c.toInt32().toInt();
+      c = c.shiftRightUnsigned(32);
+      c += x_i * y_7 + (Int64(zz[i + 7]) & M);
+      zz[i + 7] = c.toInt32().toInt();
+      c = c.shiftRightUnsigned(32);
       zc += c + zz[i + 8] & M;
       zz[i + 8] = zc.toInt32().toInt();
       zc = zc.shiftRightUnsigned(32);
@@ -93,116 +93,116 @@ class EC {
     return zc.toInt32().toInt();
   }
 
-  bool gte256(List<int> x, List<int> y) {
+  bool gte256(Int32List x, Int32List y) {
     for (int i = 7; i >= 0; i--) {
-      final x_i = x[i] ^ -0x7fffffff;
-      final y_i = y[i] ^ -0x7fffffff;
+      final x_i = Int32(x[i]) ^ Int32.MIN_VALUE;
+      final y_i = Int32(y[i]) ^ Int32.MIN_VALUE;
       if (x_i < y_i) return false;
       if (x_i > y_i) return true;
     }
     return true;
   }
 
-  void cmov(int len, int mask, List<int> x, int xOff, List<int> z, int zOff) {
-    int maskv = mask;
+  void cmov(int len, Int32 mask, Int32List x, int xOff, Int32List z, int zOff) {
+    var maskv = mask;
     maskv = -(maskv & 1);
     for (int i = 0; i < len; i++) {
-      int z_i = z[zOff + i];
+      var z_i = Int32(z[zOff + i]);
       final diff = z_i ^ x[xOff + i];
       z_i ^= (diff & maskv);
-      z[zOff + i] = z_i;
+      z[zOff + i] = z_i.toInt();
     }
   }
 
-  int cadd(int len, int mask, List<int> x, List<int> y, List<int> z) {
-    final m = -(mask & 1) & M;
+  int cadd(int len, Int32 mask, Int32List x, Int32List y, Int32List z) {
+    final m = -(mask & 1).toInt64() & M;
     Int64 c = Int64.ZERO;
     for (int i = 0; i < len; i++) {
-      c += (x[i] & M) + (y[i] & m);
+      c += (Int64(x[i]) & M) + (Int64(y[i]) & m);
       z[i] = c.toInt32().toInt();
       c = c.shiftRightUnsigned(32);
     }
     return c.toInt32().toInt();
   }
 
-  int shiftDownBit(int len, List<int> z, int c) {
-    int i = len;
-    int cv = c;
+  int shiftDownBit(int len, Int32List z, int c) {
+    var i = len;
+    var cv = Int32(c);
     while (--i >= 0) {
-      final next = z[i];
-      z[i] = (next >>> 1) | (cv << 31);
+      final next = Int32(z[i]);
+      z[i] = ((next.shiftRightUnsigned(1)) | (cv << 31)).toInt();
       cv = next;
     }
-    return cv << 31;
+    return (cv << 31).toInt();
   }
 
-  int shuffle2(int x) {
-    int t = 0;
-    int xv = x;
-    t = (xv ^ (xv >>> 7)) & 0x00aa00aa;
+  Int32 shuffle2(Int32 x) {
+    var t = Int32.ZERO;
+    var xv = x;
+    t = (xv ^ (xv.shiftRightUnsigned(7))) & 0x00aa00aa;
     xv ^= (t ^ (t << 7));
-    t = (xv ^ (xv >>> 14)) & 0x0000cccc;
+    t = (xv ^ (xv.shiftRightUnsigned(14))) & 0x0000cccc;
     xv ^= (t ^ (t << 14));
-    t = (xv ^ (xv >>> 4)) & 0x00f000f0;
+    t = (xv ^ (xv.shiftRightUnsigned(4))) & 0x00f000f0;
     xv ^= (t ^ (t << 4));
-    t = (xv ^ (xv >>> 8)) & 0x0000ff00;
+    t = (xv ^ (xv.shiftRightUnsigned(8))) & 0x0000ff00;
     xv ^= (t ^ (t << 8));
     return xv;
   }
 
-  bool areAllZeroes(List<int> buf, int off, int len) {
+  bool areAllZeroes(Int8List buf, int off, int len) {
     int bits = 0;
     for (int i = 0; i < len; i++) bits |= buf[off + i];
     return bits == 0;
   }
 
-  List<int> calculateS(List<int> r, List<int> k, List<int> s) {
-    final List<int> t = List.filled(SCALAR_INTS * 2, 0);
+  Int8List calculateS(Int8List r, Int8List k, Int8List s) {
+    final t = Int32List(SCALAR_INTS * 2);
     decodeScalar(r, 0, t);
-    final List<int> u = List.filled(SCALAR_INTS, 0);
+    final u = Int32List(SCALAR_INTS * 2);
     decodeScalar(k, 0, u);
-    final List<int> v = List.filled(SCALAR_INTS, 0);
+    final v = Int32List(SCALAR_INTS * 2);
     decodeScalar(s, 0, v);
     mulAddTo256(u, v, t);
-    final List<int> result = List.filled(SCALAR_BYTES * 2, 0);
+    final result = Int8List(SCALAR_BYTES * 2);
     for (int i = 0; i < t.length; i++) encode32(t[i], result, i * 4);
     return reduceScalar(result);
   }
 
-  bool checkPointVar(List<int> p) {
-    final t = List.filled(8, 0);
+  bool checkPointVar(Int8List p) {
+    final t = Int32List(8);
     decode32(p, 0, t, 0, 8);
-    t[7] &= 0x7fffffff; // TODO?
+    t[7] = (Int32(t[7]) & 0x7fffffff).toInt();
     return !gte256(t, P);
   }
 
-  bool checkScalarVar(List<int> s) {
-    final n = List.filled(SCALAR_INTS, 0);
+  bool checkScalarVar(Int8List s) {
+    final n = Int32List(SCALAR_INTS);
     decodeScalar(s, 0, n);
     return !gte256(n, L);
   }
 
-  int decode24(List<int> bs, int off) {
-    int n = bs[off] & 0xff;
-    n |= (bs[off + 1] & 0xff) << 8;
-    n |= (bs[off + 2] & 0xff) << 16;
+  int decode24(Int8List bs, int off) {
+    var n = (bs[off].toByte & 0xff).toByte;
+    n |= ((bs[off + 1].toByte & 0xff).toByte << 8).toByte;
+    n |= ((bs[off + 2].toByte & 0xff).toByte << 16).toByte;
     return n;
   }
 
-  int decode32v(List<int> bs, int off) {
-    int n = bs[off] & 0xff;
-    n |= (bs[off + 1] & 0xff) << 8;
-    n |= (bs[off + 2] & 0xff) << 16;
-    n |= bs[off + 3] << 24;
+  int decode32v(Int8List bs, int off) {
+    var n = (bs[off].toByte & 0xff);
+    n |= ((bs[off + 1].toByte & 0xff) << 8);
+    n |= ((bs[off + 2].toByte & 0xff) << 16);
+    n |= (bs[off + 3].toByte << 24);
     return n;
   }
 
-  void decode32(List<int> bs, int bsOff, List<int> n, int nOff, int nLen) {
+  void decode32(Int8List bs, int bsOff, Int32List n, int nOff, int nLen) {
     for (int i = 0; i < nLen; i++) n[nOff + i] = decode32v(bs, bsOff + i * 4);
   }
 
-  bool decodePointVar(List<int> p, int pOff, bool negate, PointExt r) {
-    final py = p.sublist(pOff, pOff + POINT_BYTES);
+  bool decodePointVar(Int8List p, int pOff, bool negate, PointExt r) {
+    final py = Int8List.fromList(p.sublist(pOff, pOff + POINT_BYTES));
     if (!checkPointVar(py)) return false;
     final x_0 = (py[POINT_BYTES - 1] & 0x80) >>> 7;
     py[POINT_BYTES - 1] = (py[POINT_BYTES - 1] & 0x7f).toByte;
@@ -221,28 +221,28 @@ class EC {
     return true;
   }
 
-  void decodeScalar(List<int> k, int kOff, List<int> n) =>
+  void decodeScalar(Int8List k, int kOff, Int32List n) =>
       decode32(k, kOff, n, 0, SCALAR_INTS);
 
-  void encode24(int n, List<int> bs, int off) {
+  void encode24(int n, Int8List bs, int off) {
     bs[off] = n.toByte;
     bs[off + 1] = (n >>> 8).toByte;
     bs[off + 2] = (n >>> 16).toByte;
   }
 
-  void encode32(int n, List<int> bs, int off) {
+  void encode32(int n, Int8List bs, int off) {
     bs[off] = n.toByte;
     bs[off + 1] = (n >>> 8).toByte;
     bs[off + 2] = (n >>> 16).toByte;
     bs[off + 3] = (n >>> 24).toByte;
   }
 
-  void encode56(Int64 n, List<int> bs, int off) {
+  void encode56(Int64 n, Int8List bs, int off) {
     encode32(n.toInt32().toInt(), bs, off);
     encode24((n.shiftRightUnsigned(32)).toInt32().toInt(), bs, off + 4);
   }
 
-  void encodePoint(PointAccum p, List<int> r, int rOff) {
+  void encodePoint(PointAccum p, Int8List r, int rOff) {
     final x = x25519Field.create;
     final y = x25519Field.create;
     x25519Field.inv(p.z, y);
@@ -255,7 +255,7 @@ class EC {
         (r[rOff + POINT_BYTES - 1] | ((x[0] & 1) << 7)).toByte;
   }
 
-  List<int> getWNAF(List<int> n, int width) {
+  Uint8List getWNAF(Int32List n, int width) {
     final t = List.filled(SCALAR_INTS * 2, 0);
     var tPos = t.length;
     var c = 0;
@@ -266,7 +266,7 @@ class EC {
       c = next;
       t[--tPos] = c;
     }
-    final ws = List.filled(256, 0);
+    final ws = Uint8List(256);
     final pow2 = 1 << width;
     final mask = pow2 - 1;
     final sign = pow2 >>> 1;
@@ -295,8 +295,8 @@ class EC {
     return ws;
   }
 
-  void scalarMultBaseYZ(List<int> k, int kOff, List<int> y, List<int> z) {
-    final n = List.filled(SCALAR_BYTES, 0);
+  void scalarMultBaseYZ(Int8List k, int kOff, Int32List y, Int32List z) {
+    final n = Int8List(SCALAR_BYTES);
     pruneScalar(k, kOff, n);
     final p = PointAccum.fromField(x25519Field);
     scalarMultBase(n, p);
@@ -313,10 +313,10 @@ class EC {
     final F = x25519Field.create;
     final G = x25519Field.create;
     final H = r.v;
-    late List<int> c;
-    late List<int> d;
-    late List<int> f;
-    late List<int> g;
+    late Int32List c;
+    late Int32List d;
+    late Int32List f;
+    late Int32List g;
     if (negate) {
       c = D;
       d = C;
@@ -354,10 +354,10 @@ class EC {
     final F = x25519Field.create;
     final G = x25519Field.create;
     final H = x25519Field.create;
-    late List<int> c;
-    late List<int> d;
-    late List<int> f;
-    late List<int> g;
+    late Int32List c;
+    late Int32List d;
+    late Int32List f;
+    late Int32List g;
     if (negate) {
       c = D;
       d = C;
@@ -459,10 +459,10 @@ class EC {
     x25519Field.mul2(p.x, p.y, p.t);
   }
 
-  void pointLookup(int block, int index, PointPrecomp p) {
+  void pointLookup(int block, Int32 index, PointPrecomp p) {
     var off = block * PRECOMP_POINTS * 3 * X25519Field.SIZE;
     for (int i = 0; i < PRECOMP_POINTS; i++) {
-      final mask = ((i ^ index) - 1) >> 31;
+      final Int32 mask = ((Int32(i) ^ index) - Int32(1)).toInt32() >> 31;
       cmov(X25519Field.SIZE, mask, _precompBase, off, p.ypx_h, 0);
       off += X25519Field.SIZE;
       cmov(X25519Field.SIZE, mask, _precompBase, off, p.ymx_h, 0);
@@ -500,7 +500,6 @@ class EC {
   }
 
   void _precompute() {
-    if (_precompBase.isNotEmpty) return;
     // Precomputed table for the base point in verification ladder
     final b = PointExt.fromField(x25519Field);
     x25519Field.copy(B_x, 0, b.x, 0);
@@ -512,7 +511,7 @@ class EC {
     x25519Field.copy(B_y, 0, p.y, 0);
     pointExtendXYAccum(p);
     _precompBase =
-        List.filled(PRECOMP_BLOCKS * PRECOMP_POINTS * 3 * X25519Field.SIZE, 0);
+        Int32List(PRECOMP_BLOCKS * PRECOMP_POINTS * 3 * X25519Field.SIZE);
     var off = 0;
     for (int b = 0; b < PRECOMP_BLOCKS; b++) {
       final List<PointExt> ds = [];
@@ -565,16 +564,16 @@ class EC {
     return;
   }
 
-  void pruneScalar(List<int> n, int nOff, List<int> r) {
+  void pruneScalar(Int8List n, int nOff, Int8List r) {
     for (int i = 0; i < SCALAR_BYTES; i++) {
       r[i] = n[nOff + i].toByte;
     }
-    r[0] = (r[0] & 0xf8);
+    r[0] = (r[0] & 0xf8).toByte;
     r[SCALAR_BYTES - 1] = (r[SCALAR_BYTES - 1] & 0x7f).toByte;
-    r[SCALAR_BYTES - 1] = (r[SCALAR_BYTES - 1] & 0x40).toByte;
+    r[SCALAR_BYTES - 1] = (r[SCALAR_BYTES - 1] | 0x40).toByte;
   }
 
-  List<int> reduceScalar(List<int> n) {
+  Int8List reduceScalar(Int8List n) {
     var x00 = Int64(decode32v(n, 0)) & M32L; // x00:32/--
     var x01 = Int64((decode24(n, 4)) << 4) & M32L; // x01:28/--
     var x02 = Int64(decode32v(n, 7)) & M32L; // x02:32/--
@@ -703,7 +702,7 @@ class EC {
     x06 &= M28L;
     x08 += (x07 >> 28);
     x07 &= M28L;
-    final r = List.filled(SCALAR_BYTES, 0);
+    final r = Int8List(SCALAR_BYTES);
     encode56(x00 | (x01 << 28), r, 0);
     encode56(x02 | (x03 << 28), r, 7);
     encode56(x04 | (x05 << 28), r, 14);
@@ -712,20 +711,20 @@ class EC {
     return r;
   }
 
-  void scalarMultBase(List<int> k, PointAccum r) {
+  void scalarMultBase(Int8List k, PointAccum r) {
     pointSetNeutralAccum(r);
-    final n = List.filled(SCALAR_INTS, 0);
+    final n = Int32List(SCALAR_INTS);
     decodeScalar(k, 0, n);
     // Recode the scalar into signed-digit form, then group comb bits in each block
-    cadd(SCALAR_INTS, ~n[0] & 1, n, L, n);
+    cadd(SCALAR_INTS, ~Int32(n[0]) & 1, n, L, n);
     shiftDownBit(SCALAR_INTS, n, 1);
-    for (int i = 0; i < SCALAR_INTS; i++) n[i] = shuffle2(n[i]);
+    for (int i = 0; i < SCALAR_INTS; i++) n[i] = shuffle2(Int32(n[i])).toInt();
     final p = PointPrecomp.fromField(x25519Field);
     var cOff = (PRECOMP_SPACING - 1) * PRECOMP_TEETH;
     while (true) {
       for (int b = 0; b < PRECOMP_BLOCKS; b++) {
-        final w = n[b] >>> cOff;
-        final sign = (w >>> (PRECOMP_TEETH - 1)) & 1;
+        final w = Int32(n[b]).shiftRightUnsigned(cOff);
+        final sign = (w.shiftRightUnsigned(PRECOMP_TEETH - 1)) & 1;
         final abs = (w ^ -sign) & PRECOMP_MASK;
         pointLookup(b, abs, p);
         x25519Field.cswap(sign, p.ypx_h, p.ymx_h);
@@ -738,20 +737,20 @@ class EC {
     }
   }
 
-  List<int> createScalarMultBaseEncoded(List<int> s) {
-    final r = List.filled(SCALAR_BYTES, 0x00);
+  Int8List createScalarMultBaseEncoded(Int8List s) {
+    final r = Int8List(SCALAR_BYTES);
     scalarMultBaseEncoded(s, r, 0);
     return r;
   }
 
-  void scalarMultBaseEncoded(List<int> k, List<int> r, int rOff) {
+  void scalarMultBaseEncoded(Int8List k, Int8List r, int rOff) {
     final p = PointAccum.fromField(x25519Field);
     scalarMultBase(k, p);
     encodePoint(p, r, rOff);
   }
 
   void scalarMultStraussVar(
-      List<int> nb, List<int> np, PointExt p, PointAccum r) {
+      Int32List nb, Int32List np, PointExt p, PointAccum r) {
     final width = 5;
     final ws_b = getWNAF(nb, WNAF_WIDTH_BASE);
     final ws_p = getWNAF(np, width);
@@ -763,13 +762,13 @@ class EC {
       final wb = ws_b[bit];
       if (wb != 0) {
         final sign = wb >> 31;
-        final index = (wb ^ sign) >>> 1;
+        final index = Int32(wb ^ sign).shiftRightUnsigned(1).toInt32().toInt();
         pointAddVar1(sign != 0, _precompBaseTable[index], r);
       }
       final wp = ws_p[bit];
       if (wp != 0) {
         final sign = wp >> 31;
-        final index = (wp ^ sign) >>> 1;
+        final index = Int32(wp ^ sign).shiftRightUnsigned(1).toInt32().toInt();
         pointAddVar1(sign != 0, tp[index], r);
       }
       if (--bit < 0) break;
@@ -787,7 +786,7 @@ class EC {
   static const DOM2_PREFIX = "SigEd25519 no Ed25519 collisions";
   static final M28L = Int64(0x0fffffff);
   static final M32L = Int64(0xffffffff);
-  static const P = [
+  static final P = Int32List.fromList([
     0xffffffed,
     0xffffffff,
     0xffffffff,
@@ -796,8 +795,8 @@ class EC {
     0xffffffff,
     0xffffffff,
     0x7fffffff
-  ];
-  static const L = [
+  ]);
+  static final L = Int32List.fromList([
     0x5cf5d3ed,
     0x5812631a,
     0xa2f79cd6,
@@ -806,14 +805,14 @@ class EC {
     0x00000000,
     0x00000000,
     0x10000000
-  ];
+  ]);
   static const L0 = 0xfcf5d3ed;
   static const L1 = 0x012631a6;
   static const L2 = 0x079cd658;
   static const L3 = 0xff9dea2f;
   static const L4 = 0x000014df;
 
-  static const B_x = [
+  static final B_x = Int32List.fromList([
     0x0325d51a,
     0x018b5823,
     0x007b2c95,
@@ -824,9 +823,9 @@ class EC {
     0x013fec0a,
     0x029e6b72,
     0x0042d26d
-  ];
+  ]);
 
-  static const B_y = [
+  static final B_y = Int32List.fromList([
     0x02666658,
     0x01999999,
     0x00666666,
@@ -837,9 +836,9 @@ class EC {
     0x00666666,
     0x03333333,
     0x00cccccc
-  ];
+  ]);
 
-  static const C_d = [
+  static final C_d = Int32List.fromList([
     0x035978a3,
     0x02d37284,
     0x018ab75e,
@@ -850,9 +849,9 @@ class EC {
     0x01e738cc,
     0x03715b7f,
     0x00a406d9
-  ];
+  ]);
 
-  static const C_d2 = [
+  static final C_d2 = Int32List.fromList([
     0x02b2f159,
     0x01a6e509,
     0x01156ebd,
@@ -863,9 +862,9 @@ class EC {
     0x01ce7198,
     0x02e2b6ff,
     0x00480db3
-  ];
+  ]);
 
-  static const C_d4 = [
+  static final C_d4 = Int32List.fromList([
     0x0165e2b2,
     0x034dca13,
     0x002add7a,
@@ -876,24 +875,24 @@ class EC {
     0x019ce331,
     0x01c56dff,
     0x00901b67
-  ];
-  static const WNAF_WIDTH_BASE = 7;
-  static const PRECOMP_BLOCKS = 8;
-  static const PRECOMP_TEETH = 4;
-  static const PRECOMP_SPACING = 8;
-  static const PRECOMP_POINTS = 1 << (PRECOMP_TEETH - 1);
-  static const PRECOMP_MASK = PRECOMP_POINTS - 1;
-  static const M = 0xffffffff;
+  ]);
+  static final WNAF_WIDTH_BASE = 7;
+  static final PRECOMP_BLOCKS = 8;
+  static final PRECOMP_TEETH = 4;
+  static final PRECOMP_SPACING = 8;
+  static final PRECOMP_POINTS = 1 << PRECOMP_TEETH - 1;
+  static final PRECOMP_MASK = PRECOMP_POINTS - 1;
+  static final M = Int64(0xffffffff);
 }
 
 final ec = EC();
 
 class PointAccum {
-  final List<int> x;
-  final List<int> y;
-  final List<int> z;
-  final List<int> u;
-  final List<int> v;
+  final Int32List x;
+  final Int32List y;
+  final Int32List z;
+  final Int32List u;
+  final Int32List v;
 
   PointAccum(this.x, this.y, this.z, this.u, this.v);
 
@@ -907,10 +906,10 @@ class PointAccum {
 }
 
 class PointExt {
-  final List<int> x;
-  final List<int> y;
-  final List<int> z;
-  final List<int> t;
+  final Int32List x;
+  final Int32List y;
+  final Int32List z;
+  final Int32List t;
 
   PointExt(this.x, this.y, this.z, this.t);
 
@@ -923,9 +922,9 @@ class PointExt {
 }
 
 class PointPrecomp {
-  final List<int> ypx_h;
-  final List<int> ymx_h;
-  final List<int> xyd;
+  final Int32List ypx_h;
+  final Int32List ymx_h;
+  final Int32List xyd;
 
   PointPrecomp(this.ypx_h, this.ymx_h, this.xyd);
 
