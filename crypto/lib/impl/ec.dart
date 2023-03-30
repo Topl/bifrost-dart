@@ -183,9 +183,9 @@ class EC {
   }
 
   int decode24(Int8List bs, int off) {
-    var n = (bs[off].toByte & 0xff).toByte;
-    n |= ((bs[off + 1].toByte & 0xff).toByte << 8).toByte;
-    n |= ((bs[off + 2].toByte & 0xff).toByte << 16).toByte;
+    var n = (bs[off] & 0xff);
+    n |= ((bs[off + 1] & 0xff) << 8);
+    n |= ((bs[off + 2] & 0xff) << 16);
     return n;
   }
 
@@ -255,18 +255,18 @@ class EC {
         (r[rOff + POINT_BYTES - 1] | ((x[0] & 1) << 7)).toByte;
   }
 
-  Uint8List getWNAF(Int32List n, int width) {
-    final t = List.filled(SCALAR_INTS * 2, 0);
+  Int8List getWNAF(Int32List n, int width) {
+    final t = Int32List(SCALAR_INTS * 2);
     var tPos = t.length;
-    var c = 0;
+    var c = Int32.ZERO;
     var i = SCALAR_INTS;
     while (--i >= 0) {
-      final next = n[i];
-      t[--tPos] = (next >>> 16) | (c << 16);
+      final next = Int32(n[i]);
+      t[--tPos] = ((next.shiftRightUnsigned(16)) | (c << 16)).toInt32().toInt();
       c = next;
-      t[--tPos] = c;
+      t[--tPos] = c.toInt();
     }
-    final ws = Uint8List(256);
+    final ws = Int8List(256);
     final pow2 = 1 << width;
     final mask = pow2 - 1;
     final sign = pow2 >>> 1;
@@ -592,7 +592,7 @@ class EC {
     var x15 = Int64((decode24(n, 53)) << 4) & M32L; // x15:28/--
     var x16 = Int64(decode32v(n, 56)) & M32L; // x16:32/--
     var x17 = Int64((decode24(n, 60)) << 4) & M32L; // x17:28/--
-    final x18 = n[63] & 0xff; // x18:08/-- TODO?
+    final x18 = Int64(n[63]) & Int64(0xff); // x18:08/-- TODO?
     var t = Int64(0);
     x09 -= x18 * L0; // x09:34/28
     x10 -= x18 * L1; // x10:33/30
@@ -806,11 +806,11 @@ class EC {
     0x00000000,
     0x10000000
   ]);
-  static const L0 = 0xfcf5d3ed;
-  static const L1 = 0x012631a6;
-  static const L2 = 0x079cd658;
-  static const L3 = 0xff9dea2f;
-  static const L4 = 0x000014df;
+  static final L0 = Int32(0xfcf5d3ed);
+  static final L1 = Int32(0x012631a6);
+  static final L2 = Int32(0x079cd658);
+  static final L3 = Int32(0xff9dea2f);
+  static final L4 = Int32(0x000014df);
 
   static final B_x = Int32List.fromList([
     0x0325d51a,

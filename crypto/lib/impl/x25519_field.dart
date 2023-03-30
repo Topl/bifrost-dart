@@ -134,7 +134,7 @@ class X25519Field {
   void decode(Int8List x, int xOff, Int32List z) {
     decode128(x, xOff, z, 0);
     decode128(x, xOff + 16, z, 5);
-    z[9] &= M24;
+    z[9] = (Int32(z[9]) & M24).toInt();
   }
 
   void decode128(Int8List bs, int off, Int32List z, zOff) {
@@ -154,9 +154,9 @@ class X25519Field {
 
   Int32 decode32(Int8List bs, int off) {
     var n = Int32(bs[off]) & 0xff;
-    n |= (bs[off + 1] & 0xff).toByte << 8;
-    n |= (bs[off + 2] & 0xff).toByte << 16;
-    n |= (bs[off + 3] & 0xff).toByte << 24;
+    n |= (bs[off + 1] & 0xff) << 8;
+    n |= (bs[off + 2] & 0xff) << 16;
+    n |= (bs[off + 3] & 0xff) << 24;
     return n;
   }
 
@@ -205,7 +205,7 @@ class X25519Field {
     return ((d - 1) >> 31).toInt32();
   }
 
-  bool isZeroVar(Int32List x) => 0 != isZero(x);
+  bool isZeroVar(Int32List x) => isZero(x) != Int32.ZERO;
 
   void mul1(Int32List x, int y, Int32List z) {
     final x0 = x[0];

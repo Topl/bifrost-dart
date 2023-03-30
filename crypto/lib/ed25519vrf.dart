@@ -19,7 +19,7 @@ class Ed25519VRF {
     ec.encodePoint(NP, neutralPointBytes, 0);
   }
 
-  static const suite = [3];
+  static final suite = Int8List(1)..[0] = 3;
   final cofactor = Int8List(EC.SCALAR_BYTES);
   static final zeroScalar = Int8List(EC.SCALAR_BYTES);
   static final oneScalar = Int8List(EC.SCALAR_BYTES);
@@ -63,7 +63,8 @@ class Ed25519VRF {
         signature.sublist(EC.POINT_BYTES, EC.POINT_BYTES + C_BYTES) +
             Int8List(EC.SCALAR_BYTES - C_BYTES));
     final s = Int8List.fromList(signature.sublist(EC.POINT_BYTES + C_BYTES));
-    final H = await _hashToCurveTryAndIncrement(_vk, message);
+    final H =
+        await _hashToCurveTryAndIncrement(_vk, Int8List.fromList(message));
     final gamma = PointExt.fromField(ec.x25519Field);
     final Y = PointExt.fromField(ec.x25519Field);
     ec.decodePointVar(gamma_str, 0, false, gamma);
@@ -101,7 +102,7 @@ class Ed25519VRF {
     assert(sk.length == 32);
     final x = await _pruneHash(sk);
     final pk = ec.createScalarMultBaseEncoded(x);
-    final H = await _hashToCurveTryAndIncrement(pk, message);
+    final H = await _hashToCurveTryAndIncrement(pk, Int8List.fromList(message));
     final gamma = PointAccum.fromField(ec.x25519Field);
     ec.decodeScalar(x, 0, np);
     ec.decodeScalar(zeroScalar, 0, nb);
@@ -118,10 +119,7 @@ class Ed25519VRF {
     final s = ec.calculateS(k, c, x);
     final gamma_str = Int8List(EC.POINT_BYTES);
     ec.encodePoint(gamma, gamma_str, 0);
-    final pi = <int>[]
-      ..addAll(gamma_str)
-      ..addAll(c.take(C_BYTES))
-      ..addAll(s);
+    final pi = gamma_str + c.sublist(0, C_BYTES) + s;
     assert(pi.length == PI_BYTES);
     return pi;
   }
@@ -155,10 +153,8 @@ class Ed25519VRF {
     return h;
   }
 
-  _hashToCurveTryAndIncrement(List<int> Y, List<int> a) async {
+  _hashToCurveTryAndIncrement(Int8List Y, Int8List a) async {
     int ctr = 0;
-    final one = [0x01];
-    final zero = [0x00];
     final hash = Int8List(EC.POINT_BYTES);
     final H = PointExt.fromField(ec.x25519Field);
     final HR = PointAccum.fromField(ec.x25519Field);
@@ -167,16 +163,16 @@ class Ed25519VRF {
       final ctr_byte = [ctr.toByte];
       final input = <int>[]
         ..addAll(suite)
-        ..addAll(one)
+        ..add(0x01)
         ..addAll(Y)
         ..addAll(a)
         ..addAll(ctr_byte)
-        ..addAll(zero);
+        ..add(0x00);
       final output = await _sha512Signed(input);
       for (int i = 0; i < EC.POINT_BYTES; i++) hash[i] = output[i];
       isPoint = ec.decodePointVar(hash, 0, false, H);
       if (isPoint) {
-        isPoint != _isNeutralPoint(H);
+        isPoint = !_isNeutralPoint(H);
       }
       ctr += 1;
     }
