@@ -76,14 +76,14 @@ class Blockchain {
     final stakerInitializers =
         await PrivateTestnet().stakerInitializers(genesisTimestamp, 1);
 
+    final stakerInitializer = stakerInitializers[0];
+
     final genesisConfig = await PrivateTestnet()
         .config(genesisTimestamp, stakerInitializers, null);
 
     final genesisBlock = await genesisConfig.block;
 
     final genesisBlockId = genesisBlock.header.id;
-
-    final vrfKeyPair = await ed25519Vrf.generateKeyPair();
 
     final clock = Clock(
       Duration(milliseconds: 200),
@@ -123,8 +123,8 @@ class Blockchain {
 
     final leaderElection = LeaderElectionValidation(vrfConfig);
 
-    final vrfCalculator =
-        VrfCalculator(vrfKeyPair.sk, clock, leaderElection, vrfConfig, 512);
+    final vrfCalculator = VrfCalculator(
+        stakerInitializer.vrfKeyPair.sk, clock, leaderElection, vrfConfig, 512);
 
     final secureStore = InMemorySecureStore();
 
@@ -155,13 +155,13 @@ class Blockchain {
         canonicalHeadSlotData.slotId,
         Int64(150),
         Int64(0),
-        stakerInitializers[0].stakingAddress,
+        stakerInitializer.stakingAddress,
         secureStore,
         clock,
         vrfCalculator,
         etaCalculation,
         consensusValidationState,
-        stakerInitializers[0].kesKeyPair.sk);
+        stakerInitializer.kesKeyPair.sk);
 
     log.info("Preparing LocalChain");
 
@@ -183,8 +183,8 @@ class Blockchain {
     log.info("Preparing Staking");
 
     final staker = Staking(
-      stakerInitializers[0].stakingAddress,
-      stakerInitializers[0].vrfKeyPair.vk,
+      stakerInitializer.stakingAddress,
+      stakerInitializer.vrfKeyPair.vk,
       operationalKeyMaker,
       consensusValidationState,
       etaCalculation,
