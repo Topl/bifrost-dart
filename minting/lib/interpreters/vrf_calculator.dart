@@ -36,8 +36,8 @@ class VrfCalculator extends VrfCalculatorAlgebra {
         relativeStake, Int64(vrfConfig.lddCutoff));
     final leaderCalculations = <Slot>[];
     for (final entry in rhosList.entries) {
-      if (await leaderElectionValidation.isSlotLeaderForThreshold(
-          threshold, entry.value)) leaderCalculations.add(entry.key);
+      if (!(await leaderElectionValidation.isSlotLeaderForThreshold(
+          threshold, entry.value))) leaderCalculations.add(entry.key);
     }
     return leaderCalculations;
   }

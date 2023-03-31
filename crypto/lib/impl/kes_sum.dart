@@ -47,7 +47,7 @@ class KesSum {
 
   Future<bool> verify(SignatureKesSum signature, List<int> message,
       VerificationKeyKesSum vk) async {
-    bool leftGoing(int level) => ((vk.step / kesHelper.exp(level)) % 2) == 0;
+    bool leftGoing(int level) => ((vk.step ~/ kesHelper.exp(level)) % 2) == 0;
     Future<bool> emptyWitness() async =>
         vk.value.sameElements(await kesHelper.hash(signature.verificationKey));
     Future<bool> singleWitness(List<int> witness) async {
@@ -94,12 +94,12 @@ class KesSum {
             await kesHelper.hash(signature.verificationKey), 1);
     }
 
-    final merkleVerification = await verifyMerkle(signature.witness);
-    if (!merkleVerification) return false;
-
     final ed25519Verification = await ed25519.verify(
         signature.signature, message, signature.verificationKey);
-    return ed25519Verification;
+    if (!ed25519Verification) return false;
+
+    final merkleVerification = await verifyMerkle(signature.witness);
+    return merkleVerification;
   }
 
   Future<KesBinaryTree> update(KesBinaryTree tree, int step) async {
@@ -129,7 +129,7 @@ class KesSum {
     Future<KesBinaryTree> seedTree(List<int> seed, int height) async {
       if (height == 0) {
         final keyPair = await ed25519.generateKeyPairFromSeed(seed);
-        return KesSigningLeaf(keyPair.sk, keyPair.vk);
+        return KesSigningLeaf(List.from(keyPair.sk), List.from(keyPair.vk));
       } else {
         final r = await kesHelper.prng(seed);
         final left = await seedTree(r.first, height - 1);
@@ -192,7 +192,7 @@ class KesSum {
               input.witnessLeft,
               input.witnessRight,
               KesEmpty(),
-              KesSigningLeaf(keyPair.sk, keyPair.vk));
+              KesSigningLeaf(List.of(keyPair.sk), List.of(keyPair.vk)));
           eraseOldNode(input.left);
           kesHelper.overwriteBytes(input.seed);
           return newNode;
@@ -211,6 +211,14 @@ class KesSum {
           eraseOldNode(input.left);
           kesHelper.overwriteBytes(input.seed);
           return newNode;
+        }
+        if (input.left is KesEmpty) {
+          return KesMerkleNode(
+              input.seed,
+              input.witnessLeft,
+              input.witnessRight,
+              KesEmpty(),
+              await evolveKey(input.right, shiftStep(step)));
         }
       } else if (input is KesSigningLeaf)
         return input;
@@ -245,6 +253,21 @@ class KesMerkleNode extends KesBinaryTree {
 
   KesMerkleNode(
       this.seed, this.witnessLeft, this.witnessRight, this.left, this.right);
+
+  @override
+  int get hashCode => Object.hash(seed, witnessLeft, witnessRight, left, right);
+
+  @override
+  bool operator ==(Object other) {
+    if (other is KesMerkleNode) {
+      return seed.sameElements(other.seed) &&
+          witnessLeft.sameElements(other.witnessLeft) &&
+          witnessRight.sameElements(other.witnessRight) &&
+          left == other.left &&
+          right == other.right;
+    }
+    return false;
+  }
 }
 
 class KesSigningLeaf extends KesBinaryTree {
@@ -252,15 +275,48 @@ class KesSigningLeaf extends KesBinaryTree {
   final List<int> vk;
 
   KesSigningLeaf(this.sk, this.vk);
+
+  @override
+  int get hashCode => Object.hash(sk, vk);
+
+  @override
+  bool operator ==(Object other) {
+    if (other is KesSigningLeaf) {
+      return sk.sameElements(other.sk) && vk.sameElements(other.vk);
+    }
+    return false;
+  }
 }
 
-class KesEmpty extends KesBinaryTree {}
+class KesEmpty extends KesBinaryTree {
+  @override
+  int get hashCode => 0;
+
+  @override
+  bool operator ==(Object other) {
+    if (other is KesEmpty) {
+      return true;
+    }
+    return false;
+  }
+}
 
 class SecretKeyKesSum {
   final KesBinaryTree tree;
   final Int64 offset;
 
   SecretKeyKesSum({required this.tree, required this.offset});
+
+  @override
+  int get hashCode => Object.hash(tree, offset);
+
+  @override
+  bool operator ==(Object other) {
+    if (other is SecretKeyKesSum) {
+      return tree == other.tree && offset == other.offset;
+    }
+    return false;
+  }
 }
 
 class VerificationKeyKesSum {
@@ -268,6 +324,16 @@ class VerificationKeyKesSum {
   final int step;
 
   VerificationKeyKesSum({required this.value, required this.step});
+  @override
+  int get hashCode => Object.hash(value, step);
+
+  @override
+  bool operator ==(Object other) {
+    if (other is VerificationKeyKesSum) {
+      return value.sameElements(other.value) && step == other.step;
+    }
+    return false;
+  }
 }
 
 class KeyPairKesSum {
@@ -275,4 +341,15 @@ class KeyPairKesSum {
   final VerificationKeyKesSum vk;
 
   KeyPairKesSum({required this.sk, required this.vk});
+
+  @override
+  int get hashCode => Object.hash(sk, vk);
+
+  @override
+  bool operator ==(Object other) {
+    if (other is KeyPairKesSum) {
+      return sk == other.sk && vk == other.vk;
+    }
+    return false;
+  }
 }

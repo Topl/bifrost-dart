@@ -163,6 +163,17 @@ class TreeHeight {
   final int sub;
 
   TreeHeight(this.sup, this.sub);
+
+  @override
+  int get hashCode => Object.hash(sup, sub);
+
+  @override
+  bool operator ==(Object other) {
+    if (other is TreeHeight) {
+      return sup == other.sup && sub == other.sub;
+    }
+    return false;
+  }
 }
 
 class SecretKeyKesProduct {
@@ -178,6 +189,22 @@ class SecretKeyKesProduct {
       required this.nextSubSeed,
       required this.subSignature,
       required this.offset});
+
+  @override
+  int get hashCode =>
+      Object.hash(superTree, subTree, nextSubSeed, subSignature, offset);
+
+  @override
+  bool operator ==(Object other) {
+    if (other is SecretKeyKesProduct) {
+      superTree == other.superTree &&
+          subTree == other.subTree &&
+          nextSubSeed == other.nextSubSeed &&
+          subSignature == other.subSignature &&
+          offset == other.offset;
+    }
+    return false;
+  }
 
   factory SecretKeyKesProduct.decode(List<int> bytes) {
     final superTreeRes = _decodeTree(bytes);
@@ -281,4 +308,12 @@ class KeyPairKesProduct {
   final VerificationKeyKesProduct vk;
 
   KeyPairKesProduct({required this.sk, required this.vk});
+
+  @override
+  int get hashCode => Object.hash(sk, vk);
+
+  @override
+  bool operator ==(Object other) {
+    return other is KeyPairKesProduct && other.sk == sk && other.vk == vk;
+  }
 }
