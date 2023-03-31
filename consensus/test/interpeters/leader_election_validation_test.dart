@@ -1,4 +1,3 @@
-import 'package:bifrost_common/models/common.dart';
 import 'package:bifrost_consensus/interpreters/leader_election_validation.dart';
 import 'package:bifrost_consensus/models/vrf_config.dart';
 import 'package:convert/convert.dart';

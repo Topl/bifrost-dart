@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/models/unsigned.dart';
@@ -77,8 +76,9 @@ class BlockProducer extends BlockProducerAlgebra {
                 nextHit,
               ));
           if (maybeHeader != null) {
+            final headerId = await maybeHeader.id;
             log.info(
-                "Produced block header id=${maybeHeader.id.show} height=${maybeHeader.height} slot=${maybeHeader.slot} parentId=${maybeHeader.parentHeaderId.show}");
+                "Produced block header id=${headerId.show} height=${maybeHeader.height} slot=${maybeHeader.slot} parentId=${maybeHeader.parentHeaderId.show}");
             return FullBlock(header: maybeHeader, fullBody: bodyOpt);
           } else {
             log.warning("Failed to produce block at next slot=${nextHit.slot}");

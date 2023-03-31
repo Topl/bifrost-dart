@@ -3,7 +3,7 @@ import 'package:bifrost_codecs/codecs.dart';
 import 'package:logging/logging.dart';
 
 void main(List<String> args) async {
-  Logger.root.level = Level.FINE;
+  Logger.root.level = Level.INFO;
   Logger.root.onRecord.listen((record) {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
@@ -16,7 +16,7 @@ void main(List<String> args) async {
   blockchain.run();
 
   // Access the stream of (adopted) blocks, and do "something" with each.
-  blockchain.blocks.forEach((block) {
-    log.finer("Got block: ${block.header.id.show}");
+  blockchain.blocks.asyncMap((block) => block.header.id).forEach((id) {
+    log.finer("Got block: ${id.show}");
   });
 }

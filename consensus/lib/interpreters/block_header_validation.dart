@@ -12,7 +12,6 @@ import 'package:bifrost_crypto/ed25519vrf.dart';
 import 'package:bifrost_crypto/kes.dart';
 import 'package:bifrost_crypto/utils.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:hashlib/hashlib.dart';
 import 'package:rational/rational.dart';
 import 'package:topl_protobuf/consensus/models/block_header.pb.dart';
 import 'package:topl_protobuf/consensus/models/block_id.pb.dart';
@@ -120,14 +119,12 @@ class BlockHeaderValidation extends BlockHeadervalidationAlgebra {
 
   Future<List<String>> _registrationVerification(BlockHeader header) async {
     final commitment = await consensusValidationState.operatorRegistration(
-        header.id, header.slot, header.address);
+        await header.id, header.slot, header.address);
     if (commitment == null) return ["Unregistered"];
-    final message = await sha256
-        .convert([]
-          ..addAll(header.eligibilityCertificate.vrfVK)
-          ..addAll(header.address.value))
-        .bytes
-        .int8List;
+    final message =
+        await (header.eligibilityCertificate.vrfVK + header.address.value)
+            .hash256;
+
     final verificationResult = await kesProduct.verify(
         commitment,
         message,
@@ -140,7 +137,7 @@ class BlockHeaderValidation extends BlockHeadervalidationAlgebra {
   Future<Either<List<String>, Rational>> _vrfThresholdFor(
       BlockHeader header) async {
     final relativeStake = await consensusValidationState.operatorRelativeStake(
-        header.id, header.slot, header.address);
+        await header.id, header.slot, header.address);
     if (relativeStake == null) return Left(["Unregistered"]);
     final threshold = await leaderElectionValidation.getThreshold(
         relativeStake, header.slot - header.parentSlot);

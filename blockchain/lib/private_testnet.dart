@@ -3,7 +3,7 @@ import 'package:bifrost_common/utils.dart';
 import 'package:bifrost_crypto/kes.dart';
 import 'package:bifrost_blockchain/genesis.dart';
 import 'package:bifrost_blockchain/staker_initializer.dart';
-import 'package:cryptography/cryptography.dart';
+import 'package:bifrost_crypto/utils.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:rational/rational.dart';
 import 'package:topl_protobuf/brambl/models/address.pb.dart';
@@ -18,10 +18,7 @@ class PrivateTestnet {
     assert(stakerCount >= 0);
     final out = <StakerInitializer>[];
     for (int i = 0; i < stakerCount; i++) {
-      final seed = (await Sha256().hash(<int>[]
-            ..addAll(timestamp.immutableBytes)
-            ..addAll(i.immutableBytes)))
-          .bytes;
+      final seed = await (timestamp.immutableBytes + i.immutableBytes).hash256;
       out.add(await StakerInitializer.fromSeed(seed, TreeHeight(9, 9)));
     }
     return out;

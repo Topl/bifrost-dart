@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:bifrost_common/models/common.dart';
 import 'package:bifrost_common/utils.dart';
 

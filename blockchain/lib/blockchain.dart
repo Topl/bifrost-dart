@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:bifrost_blockchain/data_stores.dart';
 import 'package:bifrost_blockchain/genesis.dart';
 import 'package:bifrost_blockchain/private_testnet.dart';
-import 'package:bifrost_blockchain/staker_initializer.dart';
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/algebras/clock_algebra.dart';
 import 'package:bifrost_common/algebras/parent_child_tree_algebra.dart';
@@ -22,10 +21,7 @@ import 'package:bifrost_consensus/interpreters/leader_election_validation.dart';
 import 'package:bifrost_consensus/interpreters/local_chain.dart';
 import 'package:bifrost_consensus/models/vrf_config.dart';
 import 'package:bifrost_consensus/utils.dart';
-import 'package:bifrost_crypto/ed25519vrf.dart';
 import 'package:bifrost_minting/algebras/block_producer_algebra.dart';
-import 'package:bifrost_minting/algebras/secure_store_algebra.dart';
-import 'package:bifrost_minting/algebras/staking_algebra.dart';
 import 'package:bifrost_minting/interpreters/block_packer.dart';
 import 'package:bifrost_minting/interpreters/block_producer.dart';
 import 'package:bifrost_minting/interpreters/in_memory_secure_store.dart';
@@ -83,7 +79,7 @@ class Blockchain {
 
     final genesisBlock = await genesisConfig.block;
 
-    final genesisBlockId = genesisBlock.header.id;
+    final genesisBlockId = await genesisBlock.header.id;
 
     final clock = Clock(
       Duration(milliseconds: 200),
@@ -224,7 +220,7 @@ class Blockchain {
   }
 
   Future<void> processBlock(FullBlock block) async {
-    final id = block.header.id;
+    final id = await block.header.id;
 
     await parentChildTree.assocate(id, block.header.parentHeaderId);
     await dataStores.slotData.put(id, await block.header.slotData);

@@ -1,10 +1,7 @@
-import 'dart:typed_data';
-
 import 'package:bifrost_crypto/ed25519.dart';
 import 'package:bifrost_crypto/ed25519vrf.dart';
 import 'package:bifrost_crypto/kes.dart';
 import 'package:bifrost_crypto/utils.dart';
-import 'package:cryptography/cryptography.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:topl_protobuf/brambl/models/address.pb.dart';
 import 'package:topl_protobuf/brambl/models/box/value.pb.dart';
@@ -45,11 +42,7 @@ class StakerInitializer {
 
   Future<SignatureKesProduct> get registration async => kesProduct.sign(
         kesKeyPair.sk,
-        Uint8List.fromList((await Sha256().hash(<int>[]
-                  ..addAll(vrfKeyPair.vk)
-                  ..addAll(operatorKeyPair.vk)))
-                .bytes)
-            .int8List,
+        await (vrfKeyPair.vk + operatorKeyPair.vk).hash256,
       );
 
   StakingAddress get stakingAddress =>

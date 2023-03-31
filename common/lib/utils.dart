@@ -1,8 +1,6 @@
 import 'dart:typed_data';
 import 'package:bifrost_common/models/unsigned.dart';
-import 'package:collection/collection.dart';
 import 'package:fixnum/fixnum.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:topl_protobuf/consensus/models/block_header.pb.dart';
 import 'package:topl_protobuf/quivr/models/shared.pb.dart';
 
@@ -42,14 +40,6 @@ extension ListIntOps on List<int> {
       _bigInt = (_bigInt << 8) | BigInt.from(data.getUint8(i));
     }
     return _bigInt;
-
-    BigInt result = BigInt.zero;
-
-    for (final byte in this.sublist(1).reversed) {
-      // reading in big-endian, so we essentially concat the new byte to the end
-      result = (result << 8) | BigInt.from(byte);
-    }
-    return result;
   }
 }
 

@@ -1,6 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:bifrost_common/models/unsigned.dart';
 import 'package:bifrost_common/utils.dart';
-import 'package:cryptography/dart.dart';
+import 'package:bifrost_crypto/utils.dart';
 import 'package:fast_base58/fast_base58.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:topl_protobuf/brambl/models/evidence.pb.dart';
@@ -13,14 +15,10 @@ import 'package:topl_protobuf/consensus/models/operational_certificate.pb.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:topl_protobuf/quivr/models/shared.pb.dart';
 
-const _hashAlg = const DartSha256();
-
 extension IoTransactionCodecs on IoTransaction {
   // TODO
   Identifier_IoTransaction32 get id => Identifier_IoTransaction32(
-      evidence: Evidence_Sized32(
-          digest:
-              Digest_Digest32(value: List.filled(32, 0x00, growable: false))));
+      evidence: Evidence_Sized32(digest: Digest_Digest32(value: Int8List(32))));
 }
 
 extension BlockHeaderCodecs on BlockHeader {
@@ -36,7 +34,7 @@ extension BlockHeaderCodecs on BlockHeader {
     ..addAll(operationalCertificate.immutableBytes)
     ..addAll(metadata)
     ..addAll(address.value);
-  BlockId get id => BlockId(value: _hashAlg.hashSync(immutableBytes).bytes);
+  Future<BlockId> get id async => BlockId(value: await immutableBytes.hash256);
 }
 
 extension UnsignedBlockHeaderCodecs on UnsignedBlockHeader {
@@ -112,7 +110,7 @@ extension Int64Codecs on Int64 {
 }
 
 extension Int128Codecs on List<int> {
-  String get base58 => Base58Encode(this);
+  String get base58 => Base58Encode(Uint8List.fromList(this));
   String get show => base58;
 }
 

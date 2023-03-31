@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/models/common.dart';
 import 'package:bifrost_common/utils.dart';
@@ -32,7 +30,7 @@ extension RatioOps on Rational {
 
 extension BlockHeaderOps on BlockHeader {
   Future<SlotData> get slotData async => SlotData(
-        slotId: SlotId(blockId: id, slot: slot),
+        slotId: SlotId(blockId: await id, slot: slot),
         parentSlotId: SlotId(blockId: parentHeaderId, slot: parentSlot),
         rho: await ed25519Vrf.proofToHash(eligibilityCertificate.vrfSig),
         eta: eligibilityCertificate.eta,

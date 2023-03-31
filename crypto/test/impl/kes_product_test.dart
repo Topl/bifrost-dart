@@ -6,7 +6,6 @@ import 'package:bifrost_crypto/utils.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:test/test.dart';
-import 'package:convert/convert.dart';
 import 'package:topl_protobuf/consensus/models/operational_certificate.pb.dart';
 
 import '../test_helpers.dart';

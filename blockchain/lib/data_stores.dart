@@ -60,7 +60,7 @@ class DataStores {
       blockHeightTree: makeDb(),
     );
 
-    final genesisBlockId = genesisBlock.header.id;
+    final genesisBlockId = await genesisBlock.header.id;
 
     await stores.currentEventIds
         .put(CurreventEventIdGetterSetterIndices.CanonicalHead, genesisBlockId);

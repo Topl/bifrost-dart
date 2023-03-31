@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/algebras/clock_algebra.dart';
 import 'package:bifrost_common/models/common.dart';
@@ -10,15 +8,12 @@ import 'package:bifrost_crypto/kes.dart';
 import 'package:bifrost_minting/algebras/operational_key_maker_algebra.dart';
 import 'package:bifrost_minting/algebras/secure_store_algebra.dart';
 import 'package:bifrost_minting/algebras/vrf_calculator_algebra.dart';
-import 'package:bifrost_minting/interpreters/vrf_calculator.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:logging/logging.dart';
 import 'package:rational/rational.dart';
-import 'package:topl_protobuf/consensus/models/operational_certificate.pb.dart';
 import 'package:topl_protobuf/consensus/models/slot_data.pb.dart';
 import 'package:topl_protobuf/consensus/models/staking_address.pb.dart';
-import 'package:topl_protobuf/quivr/models/shared.pb.dart';
 
 class OperationalKeyMaker extends OperationalKeyMakerAlgebra {
   final Int64 operationalPeriodLength;
