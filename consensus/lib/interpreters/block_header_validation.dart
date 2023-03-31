@@ -50,12 +50,11 @@ class BlockHeaderValidation extends BlockHeadervalidationAlgebra {
     errors.addAll(await _vrfVerification(header));
     if (errors.isNotEmpty) return errors;
 
-    // TODO
-    // errors.addAll(await _kesVerification(header));
-    // if (errors.isNotEmpty) return errors;
+    errors.addAll(await _kesVerification(header));
+    if (errors.isNotEmpty) return errors;
 
-    // errors.addAll(await _registrationVerification(header));
-    // if (errors.isNotEmpty) return errors;
+    errors.addAll(await _registrationVerification(header));
+    if (errors.isNotEmpty) return errors;
 
     final vrfThresholdOrErrors = await _vrfThresholdFor(header);
 
@@ -105,11 +104,10 @@ class BlockHeaderValidation extends BlockHeadervalidationAlgebra {
 
   Future<List<String>> _kesVerification(BlockHeader header) async {
     final parentCommitmentVerification = await kesProduct.verify(
-        header.operationalCertificate.parentSignature,
-        []
-          ..addAll(header.operationalCertificate.childVK)
-          ..addAll(header.slot.immutableBytes),
-        header.operationalCertificate.parentVK);
+      header.operationalCertificate.parentSignature,
+      header.operationalCertificate.childVK + header.slot.immutableBytes,
+      header.operationalCertificate.parentVK,
+    );
     if (!parentCommitmentVerification)
       return ["InvalidOperationalParentSignature"];
     final childSignatureResult = await ed25519.verify(
@@ -124,7 +122,7 @@ class BlockHeaderValidation extends BlockHeadervalidationAlgebra {
     final commitment = await consensusValidationState.operatorRegistration(
         header.id, header.slot, header.address);
     if (commitment == null) return ["Unregistered"];
-    final message = blake2b256
+    final message = await sha256
         .convert([]
           ..addAll(header.eligibilityCertificate.vrfVK)
           ..addAll(header.address.value))

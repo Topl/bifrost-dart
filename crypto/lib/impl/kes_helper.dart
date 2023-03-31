@@ -1,16 +1,21 @@
 import 'dart:math';
+import 'dart:typed_data';
 
-import 'package:bifrost_crypto/kes.dart';
+import 'package:bifrost_crypto/utils.dart';
 import 'package:cryptography/cryptography.dart';
+import 'package:fixnum/fixnum.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:hashlib/hashlib.dart';
+
+import 'kes_sum.dart';
 
 class KesHelper {
   const KesHelper();
   Future<List<int>> hash(List<int> input) async {
-    return (await Sha256().hash(input)).bytes;
+    return blake2b256.convert(input).bytes.int8List;
   }
 
-  int exp(int n) => pow(2, n).toInt();
+  int exp(int n) => Int64(pow(2, n).toInt()).toInt32().toInt();
 
   Future<Tuple2<List<int>, List<int>>> prng(List<int> seed) async {
     final r1 = await hash([0x00]..addAll(seed));
@@ -33,13 +38,18 @@ class KesHelper {
 
   Future<List<int>> witness(KesBinaryTree tree) async {
     if (tree is KesMerkleNode)
-      return hash(<int>[]
-        ..addAll(tree.witnessLeft)
-        ..addAll(tree.witnessRight));
+      return hash(Int8List.fromList(tree.witnessLeft) +
+          Int8List.fromList(tree.witnessRight));
     else if (tree is KesSigningLeaf)
       return hash(tree.vk);
     else
-      return List.filled(32, 0x00, growable: false);
+      return Int8List(32);
+  }
+
+  overwriteBytes(List<int> bytes) {
+    for (int i = 0; i < bytes.length; i++) {
+      bytes[i] = SecureRandom.fast.nextInt(256) & 0xff;
+    }
   }
 }
 

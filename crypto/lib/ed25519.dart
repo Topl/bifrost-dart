@@ -10,8 +10,8 @@ class Ed25519 {
   Future<Ed25519KeyPair> _convertAlgKeypair(c.SimpleKeyPair algKeypair) async {
     final sk = await algKeypair.extractPrivateKeyBytes();
     final vk = await algKeypair.extractPublicKey();
-    return Ed25519KeyPair(
-        List.of(sk, growable: false), List.of(vk.bytes, growable: false));
+    final int8Vk = Uint8List.fromList(vk.bytes).int8List;
+    return Ed25519KeyPair(Int8List.fromList(sk), int8Vk);
   }
 
   Future<Ed25519KeyPair> generateKeyPair() async {
@@ -24,7 +24,8 @@ class Ed25519 {
 
   Future<List<int>> sign(List<int> message, List<int> sk) async {
     final vk = await getVerificationKey(sk);
-    return signKeyPair(message, Ed25519KeyPair(sk, vk));
+    final uintRes = await signKeyPair(message, Ed25519KeyPair(sk, vk));
+    return Uint8List.fromList(uintRes).int8List;
   }
 
   Future<List<int>> signKeyPair(
@@ -42,13 +43,17 @@ class Ed25519 {
 
   Future<bool> verify(
       List<int> signature, List<int> message, List<int> vk) async {
-    return await _algorithm.verify(
-      message,
+    final _sig = Uint8List.fromList(signature);
+    final _message = Uint8List.fromList(message);
+    final _vk = Uint8List.fromList(vk);
+    final result = await _algorithm.verify(
+      _message,
       signature: c.Signature(
-        signature,
-        publicKey: c.SimplePublicKey(vk, type: c.KeyPairType.ed25519),
+        _sig,
+        publicKey: c.SimplePublicKey(_vk, type: c.KeyPairType.ed25519),
       ),
     );
+    return result;
   }
 
   Future<List<int>> getVerificationKey(List<int> sk) async {

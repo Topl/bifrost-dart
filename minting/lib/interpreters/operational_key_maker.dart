@@ -188,10 +188,9 @@ class OperationalKeyMaker extends OperationalKeyMakerAlgebra {
       final slot = slots[i];
       final childKeyPair = await ed25519.generateKeyPair();
       final parentSignature = await kesProduct.sign(
-          kesParent,
-          <int>[]
-            ..addAll(childKeyPair.vk)
-            ..addAll(slot.immutableBytes));
+        kesParent,
+        childKeyPair.vk + slot.immutableBytes,
+      );
       result.add(
           OperationalKeyOut(slot, childKeyPair, parentSignature, parentVK));
     }

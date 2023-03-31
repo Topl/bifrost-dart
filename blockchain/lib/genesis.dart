@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:cryptography/cryptography.dart';
@@ -68,4 +69,4 @@ final GenesisOperationalCertificate = OperationalCertificate(
   childSignature: _emptyBytes(64),
 );
 
-_emptyBytes(int length) => List.filled(length, 0, growable: false);
+Int8List _emptyBytes(int length) => Int8List(length);
