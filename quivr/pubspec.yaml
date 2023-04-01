@@ -12,6 +12,7 @@ environment:
 
 dependencies:
   hashlib:
+  collection:
   fixnum:
   topl_protobuf:
     path: ../../protobuf-specs/build/dart

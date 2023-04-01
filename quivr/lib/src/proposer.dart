@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:fixnum/fixnum.dart';
-import 'package:topl_protobuf/quivr/models/proof.pb.dart';
 import 'package:topl_protobuf/quivr/models/proposition.pb.dart';
 import 'package:topl_protobuf/quivr/models/shared.pb.dart';
 
