@@ -53,7 +53,7 @@ class GenesisConfig {
   }
 }
 
-final GenesisParentId = BlockId(value: List.filled(32, 0x00, growable: false));
+final GenesisParentId = BlockId(value: Int8List(32));
 final GenesisOperationalCertificate = OperationalCertificate(
   parentVK: VerificationKeyKesProduct(value: _emptyBytes(32), step: 0),
   parentSignature: SignatureKesProduct(

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:bifrost_crypto/ed25519.dart';
 import 'package:bifrost_crypto/ed25519vrf.dart';
 import 'package:bifrost_crypto/kes.dart';
@@ -51,8 +53,8 @@ class StakerInitializer {
   // TODO
   LockAddress get lockAddress => LockAddress(
       lock32: Identifier_Lock32(
-          evidence: Evidence_Sized32(
-              digest: Digest_Digest32(value: List.filled(32, 0x00)))));
+          evidence:
+              Evidence_Sized32(digest: Digest_Digest32(value: Int8List(32)))));
 
   Future<List<UnspentTransactionOutput>> genesisOutputs(Int128 stake) async {
     final toplValue = Value(

@@ -62,8 +62,8 @@ class Ed25519 {
         .sublist(0, 32);
     final s = Int8List(EC.SCALAR_BYTES);
     ec.pruneScalar(h, 0, s);
-    final vk = List.filled(32, 0x00, growable: false);
-    ec.scalarMultBaseEncoded(s, Int8List.fromList(vk), 0);
+    final vk = Int8List(32);
+    ec.scalarMultBaseEncoded(s, vk, 0);
     return vk;
   }
 }
