@@ -1,9 +1,11 @@
+import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/algebras/clock_algebra.dart';
 import 'package:bifrost_common/utils.dart';
 import 'package:bifrost_common/models/common.dart';
 import 'package:bifrost_consensus/algebras/eta_calculation_algebra.dart';
 import 'package:bifrost_consensus/utils.dart';
 import 'package:bifrost_crypto/utils.dart';
+import 'package:logging/logging.dart';
 import 'package:topl_protobuf/consensus/models/block_id.pb.dart';
 import 'package:topl_protobuf/consensus/models/slot_data.pb.dart';
 import 'package:fixnum/fixnum.dart';
@@ -15,6 +17,8 @@ class EtaCalculation extends EtaCalculationAlgebra {
   final Eta genesisEta;
 
   EtaCalculation(this.fetchSlotData, this.clock, this.genesisEta);
+
+  final log = Logger("EtaCalculation");
 
   @override
   Future<Eta> etaToBe(SlotId parentSlotId, Int64 childSlot) async {
@@ -58,7 +62,11 @@ class EtaCalculation extends EtaCalculationAlgebra {
       Eta previousEta, Int64 epoch, Iterable<Rho> rhoValues) {
     final rhoNonceHashValues = rhoValues.map((rho) => rho.rhoNonceHash);
     final args = EtaCalculationArgs(previousEta, epoch, rhoNonceHashValues);
-    return args.eta;
+    final eta = args.eta;
+    log.info(
+        "Calculated eta for epoch=$epoch eta=${eta.show} previousEta=${previousEta.show}");
+
+    return eta;
   }
 }
 

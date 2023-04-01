@@ -9,13 +9,7 @@ extension IterableEqOps<T> on Iterable<T> {
 }
 
 extension Uint8ListOps on Uint8List {
-  Int8List get int8List {
-    final result = Int8List(this.length);
-    for (int i = 0; i < this.length; i++) {
-      result[i] = this[i] & 0xff;
-    }
-    return result;
-  }
+  Int8List get int8List => Int8List.fromList(this);
 }
 
 extension ListIntOps on List<int> {

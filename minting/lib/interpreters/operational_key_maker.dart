@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/algebras/clock_algebra.dart';
 import 'package:bifrost_common/models/common.dart';
+import 'package:bifrost_common/utils.dart';
 import 'package:bifrost_consensus/algebras/consensus_validation_state_algebra.dart';
 import 'package:bifrost_consensus/algebras/eta_calculation_algebra.dart';
 import 'package:bifrost_crypto/ed25519.dart' show ed25519;
@@ -26,6 +29,7 @@ class OperationalKeyMaker extends OperationalKeyMakerAlgebra {
   final ConsensusValidationStateAlgebra consensusValidationState;
   Int64 currentOperationalPeriod;
   Map<Int64, OperationalKeyOut>? currentKeyCache;
+  DComputeImpl _computer;
 
   final log = Logger("OperationalKeyMaker");
 
@@ -40,6 +44,7 @@ class OperationalKeyMaker extends OperationalKeyMakerAlgebra {
     this.consensusValidationState,
     this.currentOperationalPeriod,
     this.currentKeyCache,
+    this._computer,
   );
 
   static Future<OperationalKeyMaker> init(
@@ -53,6 +58,7 @@ class OperationalKeyMaker extends OperationalKeyMakerAlgebra {
     EtaCalculationAlgebra etaCalculation,
     ConsensusValidationStateAlgebra consensusValidationState,
     SecretKeyKesProduct initialSK,
+    DComputeImpl computer,
   ) async {
     Int64 slot = clock.globalSlot;
     if (slot < 0) slot = Int64.ZERO;
@@ -68,6 +74,7 @@ class OperationalKeyMaker extends OperationalKeyMakerAlgebra {
       consensusValidationState,
       operationalPeriod,
       null,
+      computer,
     );
 
     await secureStore.write("k", initialSK.encode);
@@ -167,26 +174,31 @@ class OperationalKeyMaker extends OperationalKeyMakerAlgebra {
         .where((s) => !ineligibleSlots.contains(s))
         .toList();
     log.info("Preparing linear keys. count=${slots.length}");
-    final outs = await _prepareOperationalPeriodKeysImpl(kesParent, slots);
+    final outs = await _computer(
+        _prepareOperationalPeriodKeysImplTupled, Tuple2(kesParent, slots));
     final mappedKeys =
         Map.fromEntries(outs.map((out) => MapEntry(out.slot, out)));
     return mappedKeys;
   }
+}
 
-  Future<List<OperationalKeyOut>> _prepareOperationalPeriodKeysImpl(
-      SecretKeyKesProduct kesParent, List<Slot> slots) async {
-    final result = <OperationalKeyOut>[];
-    final parentVK = await kesProduct.generateVerificationKey(kesParent);
-    for (int i = 0; i < slots.length; i++) {
-      final slot = slots[i];
-      final childKeyPair = await ed25519.generateKeyPair();
-      final parentSignature = await kesProduct.sign(
-        kesParent,
-        childKeyPair.vk + slot.immutableBytes,
-      );
-      result.add(
-          OperationalKeyOut(slot, childKeyPair, parentSignature, parentVK));
-    }
-    return result;
+Future<List<OperationalKeyOut>> _prepareOperationalPeriodKeysImplTupled(
+        Tuple2<SecretKeyKesProduct, List<Slot>> tupled) =>
+    _prepareOperationalPeriodKeysImpl(tupled.first, tupled.second);
+
+Future<List<OperationalKeyOut>> _prepareOperationalPeriodKeysImpl(
+    SecretKeyKesProduct kesParent, List<Slot> slots) async {
+  final result = <OperationalKeyOut>[];
+  final parentVK = await kesProduct.generateVerificationKey(kesParent);
+  for (int i = 0; i < slots.length; i++) {
+    final slot = slots[i];
+    final childKeyPair = await ed25519.generateKeyPair();
+    final parentSignature = await kesProduct.sign(
+      kesParent,
+      childKeyPair.vk + slot.immutableBytes,
+    );
+    result
+        .add(OperationalKeyOut(slot, childKeyPair, parentSignature, parentVK));
   }
+  return result;
 }

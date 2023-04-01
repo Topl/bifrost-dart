@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:bifrost_blockchain/data_stores.dart';
 import 'package:bifrost_blockchain/genesis.dart';
 import 'package:bifrost_blockchain/private_testnet.dart';
+import 'package:bifrost_blockchain/staker_initializer.dart';
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/algebras/clock_algebra.dart';
 import 'package:bifrost_common/algebras/parent_child_tree_algebra.dart';
 import 'package:bifrost_common/interpreters/clock.dart';
 import 'package:bifrost_common/interpreters/parent_child_tree.dart';
+import 'package:bifrost_common/utils.dart';
 import 'package:bifrost_consensus/algebras/block_header_validation_algebra.dart';
 import 'package:bifrost_consensus/algebras/consensus_validation_state_algebra.dart';
 import 'package:bifrost_consensus/algebras/leader_election_validation_algebra.dart';
@@ -30,6 +32,8 @@ import 'package:bifrost_minting/interpreters/staking.dart';
 import 'package:bifrost_minting/interpreters/vrf_calculator.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:async/async.dart' show StreamGroup;
+import 'package:fpdart/fpdart.dart';
+import 'package:integral_isolates/integral_isolates.dart';
 import 'package:logging/logging.dart';
 import 'package:rational/rational.dart';
 import 'package:topl_protobuf/consensus/models/block_id.pb.dart';
@@ -66,26 +70,54 @@ class Blockchain {
 
   static Future<Blockchain> init() async {
     final log = Logger("Blockchain.Init");
+    log.info("Launching isolates");
+    final operationalKeyMakerIsolated = Isolated();
+    final vrfCalculatorIsolated = Isolated();
+    final miscIsolated = Isolated();
 
-    final genesisTimestamp = Int64(DateTime.now().millisecondsSinceEpoch);
+    final genesisTimestamp =
+        Int64(DateTime.now().millisecondsSinceEpoch + 10000);
 
-    final stakerInitializers =
-        await PrivateTestnet().stakerInitializers(genesisTimestamp, 1);
+    log.info("Genesis timestamp=$genesisTimestamp");
+
+    final stakerInitializers = await miscIsolated.isolate(
+        _initializeStakersTupled, Tuple2(genesisTimestamp, 1));
+
+    log.info("Staker initializers prepared");
 
     final stakerInitializer = stakerInitializers[0];
 
-    final genesisConfig = await PrivateTestnet()
-        .config(genesisTimestamp, stakerInitializers, null);
+    final genesisConfig =
+        await PrivateTestnet.config(genesisTimestamp, stakerInitializers, null);
 
     final genesisBlock = await genesisConfig.block;
 
     final genesisBlockId = await genesisBlock.header.id;
 
+    final vrfConfig = VrfConfig(
+      lddCutoff: 15,
+      precision: 40,
+      baselineDifficulty: Rational.fromInt(1, 20),
+      amplitude: Rational.fromInt(1, 2),
+    );
+
+    final ChainSelectionKLookback = Int64(50);
+    final FEffective = Rational.fromInt(15, 100);
+    final EpochLength = ChainSelectionKLookback * 6;
+    final ChainSelectionSWindow =
+        (Rational(ChainSelectionKLookback.toBigInt, BigInt.from(4)) *
+                FEffective.inverse)
+            .round()
+            .toInt();
+    final OperationalPeriodsPerEpoch = 2;
+    final OperationalPeriodLength = EpochLength ~/ OperationalPeriodsPerEpoch;
+    final ForwardBiasedSlotWindow = Int64(50);
+
     final clock = Clock(
       Duration(milliseconds: 200),
-      ChainSelectionKLookback * 6,
+      EpochLength,
       genesisTimestamp,
-      Int64(50),
+      ForwardBiasedSlotWindow,
     );
 
     final dataStores = await DataStores.init(genesisBlock);
@@ -107,20 +139,13 @@ class Blockchain {
     await parentChildTree.assocate(
         genesisBlockId, genesisBlock.header.parentHeaderId);
 
-    final vrfConfig = VrfConfig(
-      lddCutoff: 15,
-      precision: 40,
-      baselineDifficulty: Rational.fromInt(1, 20),
-      amplitude: Rational.fromInt(1, 2),
-    );
-
     final etaCalculation = EtaCalculation(dataStores.slotData.getOrRaise, clock,
         genesisBlock.header.eligibilityCertificate.eta);
 
     final leaderElection = LeaderElectionValidation(vrfConfig);
 
-    final vrfCalculator = VrfCalculator(
-        stakerInitializer.vrfKeyPair.sk, clock, leaderElection, vrfConfig, 512);
+    final vrfCalculator = VrfCalculator(stakerInitializer.vrfKeyPair.sk, clock,
+        leaderElection, vrfConfig, 512, vrfCalculatorIsolated.isolate);
 
     final secureStore = InMemorySecureStore();
 
@@ -148,16 +173,18 @@ class Blockchain {
     log.info("Preparing OperationalKeyMaker");
 
     final operationalKeyMaker = await OperationalKeyMaker.init(
-        canonicalHeadSlotData.slotId,
-        Int64(150),
-        Int64(0),
-        stakerInitializer.stakingAddress,
-        secureStore,
-        clock,
-        vrfCalculator,
-        etaCalculation,
-        consensusValidationState,
-        stakerInitializer.kesKeyPair.sk);
+      canonicalHeadSlotData.slotId,
+      OperationalPeriodLength,
+      Int64(0),
+      stakerInitializer.stakingAddress,
+      secureStore,
+      clock,
+      vrfCalculator,
+      etaCalculation,
+      consensusValidationState,
+      stakerInitializer.kesKeyPair.sk,
+      operationalKeyMakerIsolated.isolate,
+    );
 
     log.info("Preparing LocalChain");
 
@@ -259,4 +286,6 @@ class Blockchain {
       });
 }
 
-final ChainSelectionKLookback = Int64(50);
+_initializeStakersTupled(Tuple2<Int64, int> args) {
+  return PrivateTestnet.stakerInitializers(args.first, args.second);
+}

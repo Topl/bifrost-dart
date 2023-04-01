@@ -1,5 +1,6 @@
 import 'package:bifrost_common/algebras/clock_algebra.dart';
 import 'package:bifrost_common/models/common.dart';
+import 'package:bifrost_common/utils.dart';
 import 'package:bifrost_consensus/algebras/leader_election_validation_algebra.dart';
 import 'package:bifrost_consensus/models/vrf_config.dart';
 import 'package:bifrost_consensus/models/vrf_argument.dart';
@@ -15,12 +16,13 @@ class VrfCalculator extends VrfCalculatorAlgebra {
   final LeaderElectionValidationAlgebra leaderElectionValidation;
   final VrfConfig vrfConfig;
   final int vrfCacheSize;
+  final DComputeImpl _computer;
 
   Map<Tuple2<List<int>, Int64>, List<int>> _vrfProofsCache = {};
   Map<Tuple2<List<int>, Int64>, List<int>> _rhosCache = {};
 
   VrfCalculator(this.skVrf, this.clock, this.leaderElectionValidation,
-      this.vrfConfig, this.vrfCacheSize);
+      this.vrfConfig, this.vrfCacheSize, this._computer);
 
   @override
   Future<List<Int64>> ineligibleSlots(Int64 epoch, List<int> eta,
@@ -47,7 +49,8 @@ class VrfCalculator extends VrfCalculatorAlgebra {
     final key = Tuple2(eta, slot);
     if (!_vrfProofsCache.containsKey(key)) {
       final arg = VrfArgument(eta, slot);
-      final result = await ed25519Vrf.sign(skVrf, arg.signableBytes);
+      final result = await _computer(
+          _ed25519VRFSignTupled, Tuple2(skVrf, arg.signableBytes));
       _vrfProofsCache[key] = result;
       return result;
     }
@@ -59,10 +62,13 @@ class VrfCalculator extends VrfCalculatorAlgebra {
     final key = Tuple2(eta, slot);
     if (!_rhosCache.containsKey(eta)) {
       final proof = await proofForSlot(slot, eta);
-      final rho = await ed25519Vrf.proofToHash(proof);
+      final rho = await _computer(ed25519Vrf.proofToHash, proof);
       _rhosCache[key] = rho;
       return rho;
     }
     return _rhosCache[key]!;
   }
 }
+
+_ed25519VRFSignTupled(Tuple2<List<int>, List<int>> args) =>
+    ed25519Vrf.sign(args.first, args.second);

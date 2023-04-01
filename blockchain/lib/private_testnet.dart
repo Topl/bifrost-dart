@@ -13,7 +13,7 @@ import 'package:topl_protobuf/brambl/models/transaction/unspent_transaction_outp
 class PrivateTestnet {
   static final DefaultTotalStake = BigInt.from(10000000);
 
-  Future<List<StakerInitializer>> stakerInitializers(
+  static Future<List<StakerInitializer>> stakerInitializers(
       Int64 timestamp, int stakerCount) async {
     assert(stakerCount >= 0);
     final out = <StakerInitializer>[];
@@ -24,8 +24,8 @@ class PrivateTestnet {
     return out;
   }
 
-  Future<GenesisConfig> config(Int64 timestamp, List<StakerInitializer> stakers,
-      List<BigInt>? stakes) async {
+  static Future<GenesisConfig> config(Int64 timestamp,
+      List<StakerInitializer> stakers, List<BigInt>? stakes) async {
     final someStakes = stakes ??
         List.filled(stakers.length,
             Rational(DefaultTotalStake, BigInt.from(stakers.length)).round());

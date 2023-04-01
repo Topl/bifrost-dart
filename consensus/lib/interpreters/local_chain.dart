@@ -11,7 +11,7 @@ class LocalChain extends LocalChainAlgebra {
       StreamController.broadcast();
 
   @override
-  FutureOr<void> adopt(BlockId newHead) async {
+  Future<void> adopt(BlockId newHead) async {
     if (_currentHead != newHead) {
       _currentHead = newHead;
       _streamController.add(newHead);
@@ -22,5 +22,5 @@ class LocalChain extends LocalChainAlgebra {
   Stream<BlockId> get adoptions => _streamController.stream;
 
   @override
-  FutureOr<BlockId> get currentHead => Future.value(_currentHead);
+  Future<BlockId> get currentHead => Future.sync(() => _currentHead);
 }
