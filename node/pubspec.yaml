@@ -36,4 +36,4 @@ dependencies:
   bifrost_blockchain:
     path: ../blockchain
 dev_dependencies:    
-  build_runner: ^1.10.3
+  build_runner: ^2.3.3

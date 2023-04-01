@@ -19,5 +19,5 @@ dependencies:
   topl_protobuf:
     path: ../../protobuf-specs/build/dart
 dev_dependencies:    
-  build_runner: ^1.10.3
+  build_runner: ^2.3.3
   test:
