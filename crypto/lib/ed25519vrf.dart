@@ -1,9 +1,18 @@
 import 'dart:typed_data';
 
-import 'package:bifrost_crypto/impl/ec.dart';
+import 'package:bifrost_crypto/impl/ec.dart' as ec;
 import 'package:bifrost_crypto/utils.dart';
 import 'package:cryptography/cryptography.dart';
 import 'package:fpdart/fpdart.dart';
+
+abstract class Ed25519VRF {
+  Future<Ed25519VRFKeyPair> generateKeyPair();
+  Future<Ed25519VRFKeyPair> generateKeyPairFromSeed(List<int> seed);
+  Future<List<int>> getVerificationKey(List<int> secretKey);
+  Future<bool> verify(List<int> signature, List<int> message, List<int> vk);
+  Future<List<int>> sign(List<int> sk, List<int> message);
+  Future<Int8List> proofToHash(List<int> signature);
+}
 
 /**
  * AMS 2021:
@@ -11,24 +20,22 @@ import 'package:fpdart/fpdart.dart';
  * Elliptic curve Verifiable Random Function based on EdDSA
  * https://tools.ietf.org/html/draft-irtf-cfrg-vrf-04
  */
-class Ed25519VRF {
+class Ed25519VRFImpl extends Ed25519VRF {
   Ed25519VRF() {
-    cofactor[0] = 8;
-    oneScalar[0] = 1;
     ec.pointSetNeutralAccum(NP);
     ec.encodePoint(NP, neutralPointBytes, 0);
   }
 
   static final suite = Int8List(1)..[0] = 3;
-  final cofactor = Int8List(EC.SCALAR_BYTES);
-  static final zeroScalar = Int8List(EC.SCALAR_BYTES);
-  static final oneScalar = Int8List(EC.SCALAR_BYTES);
-  final np = Int32List(EC.SCALAR_INTS);
-  final nb = Int32List(EC.SCALAR_INTS);
+  final cofactor = Int8List(ec.SCALAR_BYTES)..[0] = 8;
+  static final zeroScalar = Int8List(ec.SCALAR_BYTES);
+  static final oneScalar = Int8List(ec.SCALAR_BYTES)..[0] = 1;
+  final np = Int32List(ec.SCALAR_INTS);
+  final nb = Int32List(ec.SCALAR_INTS);
   static const C_BYTES = 16;
-  static const PI_BYTES = EC.POINT_BYTES + EC.SCALAR_BYTES + C_BYTES;
-  static final neutralPointBytes = Int8List(EC.SCALAR_BYTES);
-  final NP = PointAccum.fromField(ec.x25519Field);
+  static const PI_BYTES = ec.POINT_BYTES + ec.SCALAR_BYTES + C_BYTES;
+  static final neutralPointBytes = Int8List(ec.SCALAR_BYTES);
+  final NP = ec.PointAccum.create();
 
   Future<Ed25519VRFKeyPair> generateKeyPair() async {
     final random = SecureRandom.safe;
@@ -46,7 +53,7 @@ class Ed25519VRF {
   Future<List<int>> getVerificationKey(List<int> secretKey) async {
     assert(secretKey.length == 32);
     final h = await _sha512Signed(secretKey);
-    final s = Int8List(EC.SCALAR_BYTES);
+    final s = Int8List(ec.SCALAR_BYTES);
     ec.pruneScalar(h, 0, s);
     final vk = Int8List(32);
     ec.scalarMultBaseEncoded(s, vk, 0);
@@ -58,25 +65,25 @@ class Ed25519VRF {
     assert(signature.length == 80);
     assert(vk.length == 32);
     final _vk = Int8List.fromList(vk);
-    final gamma_str = Int8List.fromList(signature.sublist(0, EC.POINT_BYTES));
+    final gamma_str = Int8List.fromList(signature.sublist(0, ec.POINT_BYTES));
     final c = Int8List.fromList(
-        signature.sublist(EC.POINT_BYTES, EC.POINT_BYTES + C_BYTES) +
-            Int8List(EC.SCALAR_BYTES - C_BYTES));
-    final s = Int8List.fromList(signature.sublist(EC.POINT_BYTES + C_BYTES));
+        signature.sublist(ec.POINT_BYTES, ec.POINT_BYTES + C_BYTES) +
+            Int8List(ec.SCALAR_BYTES - C_BYTES));
+    final s = Int8List.fromList(signature.sublist(ec.POINT_BYTES + C_BYTES));
     final H =
         await _hashToCurveTryAndIncrement(_vk, Int8List.fromList(message));
-    final gamma = PointExt.fromField(ec.x25519Field);
-    final Y = PointExt.fromField(ec.x25519Field);
+    final gamma = ec.PointExt.create();
+    final Y = ec.PointExt.create();
     ec.decodePointVar(gamma_str, 0, false, gamma);
     ec.decodePointVar(_vk, 0, false, Y);
-    final A = PointAccum.fromField(ec.x25519Field);
-    final B = PointAccum.fromField(ec.x25519Field);
-    final C = PointAccum.fromField(ec.x25519Field);
-    final D = PointAccum.fromField(ec.x25519Field);
-    final U = PointAccum.fromField(ec.x25519Field);
-    final V = PointAccum.fromField(ec.x25519Field);
-    final g = PointAccum.fromField(ec.x25519Field);
-    final t = PointExt.fromField(ec.x25519Field);
+    final A = ec.PointAccum.create();
+    final B = ec.PointAccum.create();
+    final C = ec.PointAccum.create();
+    final D = ec.PointAccum.create();
+    final U = ec.PointAccum.create();
+    final V = ec.PointAccum.create();
+    final g = ec.PointAccum.create();
+    final t = ec.PointExt.create();
     ec.scalarMultBase(s, A);
     ec.decodeScalar(c, 0, np);
     ec.decodeScalar(zeroScalar, 0, nb);
@@ -103,21 +110,21 @@ class Ed25519VRF {
     final x = await _pruneHash(sk);
     final pk = ec.createScalarMultBaseEncoded(x);
     final H = await _hashToCurveTryAndIncrement(pk, Int8List.fromList(message));
-    final gamma = PointAccum.fromField(ec.x25519Field);
+    final gamma = ec.PointAccum.create();
     ec.decodeScalar(x, 0, np);
     ec.decodeScalar(zeroScalar, 0, nb);
     ec.scalarMultStraussVar(nb, np, ec.pointCopyAccum(H.first), gamma);
     final k = await _nonceGenerationRFC8032(sk, H.second);
     assert(ec.checkScalarVar(k));
-    final kB = PointAccum.fromField(ec.x25519Field);
-    final kH = PointAccum.fromField(ec.x25519Field);
+    final kB = ec.PointAccum.create();
+    final kH = ec.PointAccum.create();
     ec.scalarMultBase(k, kB);
     ec.decodeScalar(k, 0, np);
     ec.decodeScalar(zeroScalar, 0, nb);
     ec.scalarMultStraussVar(nb, np, ec.pointCopyAccum(H.first), kH);
     final c = await _hashPoints(H.first, gamma, kB, kH);
     final s = ec.calculateS(k, c, x);
-    final gamma_str = Int8List(EC.POINT_BYTES);
+    final gamma_str = Int8List(ec.POINT_BYTES);
     ec.encodePoint(gamma, gamma_str, 0);
     final pi = gamma_str + c.sublist(0, C_BYTES) + s;
     assert(pi.length == PI_BYTES);
@@ -126,16 +133,16 @@ class Ed25519VRF {
 
   Future<Int8List> proofToHash(List<int> signature) async {
     assert(signature.length == 80);
-    final gamma_str = Int8List.fromList(signature.sublist(0, EC.POINT_BYTES));
+    final gamma_str = Int8List.fromList(signature.sublist(0, ec.POINT_BYTES));
     final zero = [0x00];
     final three = [0x03];
-    final gamma = PointExt.fromField(ec.x25519Field);
-    final cg = PointAccum.fromField(ec.x25519Field);
+    final gamma = ec.PointExt.create();
+    final cg = ec.PointAccum.create();
     ec.decodePointVar(gamma_str, 0, false, gamma);
     ec.decodeScalar(cofactor, 0, np);
     ec.decodeScalar(zeroScalar, 0, nb);
     ec.scalarMultStraussVar(nb, np, gamma, cg);
-    final cg_enc = Int8List(EC.POINT_BYTES);
+    final cg_enc = Int8List(ec.POINT_BYTES);
     ec.encodePoint(cg, cg_enc, 0);
     final input = <int>[]
       ..addAll(suite)
@@ -148,16 +155,16 @@ class Ed25519VRF {
   _pruneHash(List<int> s) async {
     final h = await _sha512Signed(s);
     h[0] = (h[0] & 0xf8).toByte;
-    h[EC.SCALAR_BYTES - 1] = (h[EC.SCALAR_BYTES - 1] & 0x7f).toByte;
-    h[EC.SCALAR_BYTES - 1] = (h[EC.SCALAR_BYTES - 1] | 0x40).toByte;
+    h[ec.SCALAR_BYTES - 1] = (h[ec.SCALAR_BYTES - 1] & 0x7f).toByte;
+    h[ec.SCALAR_BYTES - 1] = (h[ec.SCALAR_BYTES - 1] | 0x40).toByte;
     return h;
   }
 
   _hashToCurveTryAndIncrement(Int8List Y, Int8List a) async {
     int ctr = 0;
-    final hash = Int8List(EC.POINT_BYTES);
-    final H = PointExt.fromField(ec.x25519Field);
-    final HR = PointAccum.fromField(ec.x25519Field);
+    final hash = Int8List(ec.POINT_BYTES);
+    final H = ec.PointExt.create();
+    final HR = ec.PointAccum.create();
     bool isPoint = false;
     while (!isPoint) {
       final ctr_byte = [ctr.toByte];
@@ -169,7 +176,7 @@ class Ed25519VRF {
         ..addAll(ctr_byte)
         ..add(0x00);
       final output = await _sha512Signed(input);
-      for (int i = 0; i < EC.POINT_BYTES; i++) hash[i] = output[i];
+      for (int i = 0; i < ec.POINT_BYTES; i++) hash[i] = output[i];
       isPoint = ec.decodePointVar(hash, 0, false, H);
       if (isPoint) {
         isPoint = !_isNeutralPoint(H);
@@ -184,9 +191,9 @@ class Ed25519VRF {
     return Tuple2(HR, hash);
   }
 
-  _isNeutralPoint(PointExt p) {
-    final pBytes = Int8List(EC.POINT_BYTES);
-    final pA = PointAccum.fromField(ec.x25519Field);
+  _isNeutralPoint(ec.PointExt p) {
+    final pBytes = Int8List(ec.POINT_BYTES);
+    final pA = ec.PointAccum.create();
     ec.decodeScalar(oneScalar, 0, np);
     ec.decodeScalar(zeroScalar, 0, nb);
     ec.scalarMultStraussVar(nb, np, p, pA);
@@ -197,20 +204,20 @@ class Ed25519VRF {
   _nonceGenerationRFC8032(List<int> sk, List<int> h) async {
     final sk_hash = await _sha512Signed(sk);
     final trunc_hashed_sk = <int>[]
-      ..addAll(sk_hash.sublist(EC.SCALAR_BYTES))
+      ..addAll(sk_hash.sublist(ec.SCALAR_BYTES))
       ..addAll(h);
     final out = await _sha512Signed(trunc_hashed_sk);
     return ec.reduceScalar(out);
   }
 
-  Future<Int8List> _hashPoints(
-      PointAccum p1, PointAccum p2, PointAccum p3, PointAccum p4) async {
+  Future<Int8List> _hashPoints(ec.PointAccum p1, ec.PointAccum p2,
+      ec.PointAccum p3, ec.PointAccum p4) async {
     final zero = [0x00];
     final two = [0x02];
     final str = <int>[]
       ..addAll(suite)
       ..addAll(two);
-    final r = Int8List(EC.POINT_BYTES);
+    final r = Int8List(ec.POINT_BYTES);
     ec.encodePoint(p1, r, 0);
     str.addAll(r);
     ec.encodePoint(p2, r, 0);
@@ -222,7 +229,7 @@ class Ed25519VRF {
     str.addAll(zero);
     final out = await _sha512Signed(str);
     return Int8List.fromList(
-        out.sublist(0, C_BYTES) + Int8List(EC.SCALAR_BYTES - C_BYTES));
+        out.sublist(0, C_BYTES) + Int8List(ec.SCALAR_BYTES - C_BYTES));
   }
 
   Future<Int8List> _sha512Signed(List<int> input) async {
@@ -231,11 +238,51 @@ class Ed25519VRF {
   }
 }
 
-final ed25519Vrf = Ed25519VRF();
-
 class Ed25519VRFKeyPair {
   final List<int> sk;
   final List<int> vk;
 
   Ed25519VRFKeyPair({required this.sk, required this.vk});
+}
+
+final _impl = Ed25519VRFImpl();
+
+Ed25519VRF ed25519Vrf = _impl;
+
+final _generateKeyPair = _impl.generateKeyPair;
+final _generateKeyPairFromSeed = _impl.generateKeyPairFromSeed;
+final _getVerificationKey = _impl.getVerificationKey;
+final _verify = _impl.verify;
+final _sign = _impl.sign;
+final _proofToHash = _impl.proofToHash;
+
+class Ed25519VRFIsolated extends Ed25519VRF {
+  final DComputeImpl _compute;
+
+  Ed25519VRFIsolated(this._compute);
+
+  @override
+  Future<Ed25519VRFKeyPair> generateKeyPair() =>
+      _compute((v) => _generateKeyPair(), "");
+
+  @override
+  Future<Ed25519VRFKeyPair> generateKeyPairFromSeed(List<int> seed) =>
+      _compute(_generateKeyPairFromSeed, seed);
+
+  @override
+  Future<List<int>> getVerificationKey(List<int> secretKey) =>
+      _compute(_getVerificationKey, secretKey);
+
+  @override
+  Future<Int8List> proofToHash(List<int> signature) =>
+      _compute(_proofToHash, signature);
+
+  @override
+  Future<List<int>> sign(List<int> sk, List<int> message) =>
+      _compute((t) => _sign(t.first, t.second), Tuple2(sk, message));
+
+  @override
+  Future<bool> verify(List<int> signature, List<int> message, List<int> vk) =>
+      _compute((t) => _verify(t.first.first, t.first.second, t.second),
+          Tuple2(Tuple2(signature, message), vk));
 }

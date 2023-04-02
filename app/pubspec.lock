@@ -54,7 +54,7 @@ packages:
     source: path
     version: "1.0.0+1"
   bifrost_crypto:
-    dependency: transitive
+    dependency: "direct main"
     description:
       path: "../crypto"
       relative: true
@@ -244,7 +244,7 @@ packages:
     source: hosted
     version: "4.0.2"
   integral_isolates:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: integral_isolates
       sha256: "969ada03ae9f125bd5e631afacca47ea1d00f134778884152527f643d47b03a4"

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:bifrost_blockchain/data_stores.dart';
 import 'package:bifrost_blockchain/genesis.dart';
 import 'package:bifrost_blockchain/private_testnet.dart';
-import 'package:bifrost_blockchain/staker_initializer.dart';
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/algebras/clock_algebra.dart';
 import 'package:bifrost_common/algebras/parent_child_tree_algebra.dart';
@@ -72,7 +71,6 @@ class Blockchain {
     final log = Logger("Blockchain.Init");
     log.info("Launching isolates");
     final operationalKeyMakerIsolated = Isolated();
-    final vrfCalculatorIsolated = Isolated();
     final miscIsolated = Isolated();
 
     final genesisTimestamp =
@@ -144,8 +142,8 @@ class Blockchain {
 
     final leaderElection = LeaderElectionValidation(vrfConfig);
 
-    final vrfCalculator = VrfCalculator(stakerInitializer.vrfKeyPair.sk, clock,
-        leaderElection, vrfConfig, 512, vrfCalculatorIsolated.isolate);
+    final vrfCalculator = VrfCalculator(
+        stakerInitializer.vrfKeyPair.sk, clock, leaderElection, vrfConfig, 512);
 
     final secureStore = InMemorySecureStore();
 

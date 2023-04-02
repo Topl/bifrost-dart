@@ -9,10 +9,13 @@ environment:
 dependencies:
   logging:
   async:
+  integral_isolates: ^0.3.0+2
   bifrost_blockchain:
     path: ../blockchain
   bifrost_codecs:
     path: ../codecs
+  bifrost_crypto:
+    path: ../crypto
   topl_protobuf:
     path: ../../protobuf-specs/build/dart
   flutter:

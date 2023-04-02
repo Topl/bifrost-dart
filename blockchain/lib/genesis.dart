@@ -26,7 +26,8 @@ class GenesisConfig {
     final transaction = IoTransaction(outputs: outputs);
     final transactions = [transaction];
     final eta =
-        etaPrefix + (await transaction.id.evidence.digest.value.hash256);
+        await (etaPrefix + (await transaction.id.evidence.digest.value.hash256))
+            .hash256;
     final eligibilityCertificate = EligibilityCertificate(
       vrfSig: _emptyBytes(80),
       vrfVK: _emptyBytes(32),

@@ -4,17 +4,24 @@ import 'package:async/async.dart';
 import 'package:bifrost_blockchain/blockchain.dart';
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:flutter/material.dart';
+import 'package:integral_isolates/integral_isolates.dart';
 import 'package:logging/logging.dart';
 import 'package:topl_protobuf/consensus/models/block_header.pb.dart';
+import 'package:bifrost_crypto/ed25519.dart' as ed25519;
+import 'package:bifrost_crypto/ed25519vrf.dart' as ed25519VRF;
 
 void main() {
-  runApp(const MainApp());
-
   Logger.root.level = Level.INFO;
   Logger.root.onRecord.listen((record) {
     print(
         '${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}');
   });
+  final isolate1 = Isolated();
+  ed25519.ed25519 = ed25519.Ed25519Isolated(isolate1.isolate);
+  final isolate2 = Isolated();
+  ed25519VRF.ed25519Vrf = ed25519VRF.Ed25519VRFIsolated(isolate2.isolate);
+
+  runApp(const MainApp());
 }
 
 class MainApp extends StatelessWidget {
@@ -30,14 +37,14 @@ class MainApp extends StatelessWidget {
   }
 
   Widget launchButton(BuildContext context) => TextButton(
-        onPressed: () => Navigator.push(
-            context, MaterialPageRoute(builder: (context) => BlockchainPage())),
+        onPressed: () => Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const BlockchainPage())),
         child: const Text("Launch"),
       );
 }
 
 class BlockchainPage extends StatefulWidget {
-  BlockchainPage({super.key});
+  const BlockchainPage({super.key});
 
   @override
   _BlockchainPageState createState() => _BlockchainPageState();

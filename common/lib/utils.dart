@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:typed_data';
 import 'package:bifrost_common/models/unsigned.dart';
 import 'package:fixnum/fixnum.dart';
@@ -66,14 +65,3 @@ extension BlockHeaderOps on BlockHeader {
         address,
       );
 }
-
-// Alias's Flutter's "compute()" function signature
-typedef DComputeCallback<Q, R> = FutureOr<R> Function(Q message);
-
-typedef DComputeImpl = Future<R> Function<Q, R>(
-    DComputeCallback<Q, R> callback, Q message,
-    {String? debugLabel});
-
-Future<R> LocalCompute<Q, R>(DComputeCallback<Q, R> callback, Q message,
-        {String? debugLabel}) async =>
-    callback(message);

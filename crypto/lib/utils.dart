@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
@@ -19,3 +20,14 @@ extension ListIntOps on List<int> {
   Future<List<int>> get hash512 async =>
       blake2b512.convert(this).bytes.int8List;
 }
+
+// Alias's Flutter's "compute()" function signature
+typedef DComputeCallback<Q, R> = FutureOr<R> Function(Q message);
+
+typedef DComputeImpl = Future<R> Function<Q, R>(
+    DComputeCallback<Q, R> callback, Q message,
+    {String? debugLabel});
+
+Future<R> LocalCompute<Q, R>(DComputeCallback<Q, R> callback, Q message,
+        {String? debugLabel}) async =>
+    callback(message);

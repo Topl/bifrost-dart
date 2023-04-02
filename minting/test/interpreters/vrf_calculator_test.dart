@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:bifrost_common/algebras/clock_algebra.dart';
-import 'package:bifrost_common/utils.dart';
 import 'package:bifrost_consensus/algebras/leader_election_validation_algebra.dart';
 import 'package:bifrost_consensus/models/vrf_config.dart';
 import 'package:bifrost_crypto/utils.dart';
@@ -27,7 +26,7 @@ void main() {
         amplitude: Rational.fromInt(1, 2),
       );
       final calculator = VrfCalculator(skVrf, MockClockAlgebra(),
-          MockLeaderElectionValidationAlgebra(), config, 100, LocalCompute);
+          MockLeaderElectionValidationAlgebra(), config, 100);
 
       final eta = Int8List(32);
       final proof = await calculator.proofForSlot(Int64(10), eta);
