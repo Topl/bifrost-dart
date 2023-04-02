@@ -6,8 +6,21 @@ import 'package:fixnum/fixnum.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:topl_protobuf/consensus/models/operational_certificate.pb.dart';
 
-class KesProduct {
-  const KesProduct();
+import '../utils.dart';
+
+abstract class KesProduct {
+  Future<KeyPairKesProduct> generateKeyPair(
+      List<int> seed, TreeHeight height, Int64 offset);
+  Future<SignatureKesProduct> sign(SecretKeyKesProduct sk, List<int> message);
+  Future<bool> verify(SignatureKesProduct signature, List<int> message,
+      VerificationKeyKesProduct vk);
+  Future<SecretKeyKesProduct> update(SecretKeyKesProduct sk, int step);
+  Future<int> getCurrentStep(SecretKeyKesProduct sk);
+  Future<VerificationKeyKesProduct> generateVerificationKey(
+      SecretKeyKesProduct sk);
+}
+
+class KesProductImpl extends KesProduct {
   Future<KeyPairKesProduct> generateKeyPair(
       List<int> seed, TreeHeight height, Int64 offset) async {
     final sk = await generateSecretKey(seed, height);
@@ -153,7 +166,16 @@ class KesProduct {
   }
 }
 
-const kesProduct = KesProduct();
+final _impl = KesProductImpl();
+
+KesProduct kesProduct = KesProductImpl();
+
+final _generateKeyPair = _impl.generateKeyPair;
+final _getCurrentStep = _impl.getCurrentStep;
+final _sign = _impl.sign;
+final _update = _impl.update;
+final _verify = _impl.verify;
+final _generateVerificationKey = _impl.generateVerificationKey;
 
 class TreeHeight {
   final int sup;
@@ -313,4 +335,42 @@ class KeyPairKesProduct {
   bool operator ==(Object other) {
     return other is KeyPairKesProduct && other.sk == sk && other.vk == vk;
   }
+}
+
+class KesProudctIsolated extends KesProduct {
+  final DComputeImpl _compute;
+
+  KesProudctIsolated(this._compute);
+
+  @override
+  Future<KeyPairKesProduct> generateKeyPair(
+          List<int> seed, TreeHeight height, Int64 offset) =>
+      _compute(
+          (args) => _generateKeyPair(
+              args.first.first, args.first.second, args.second),
+          Tuple2(Tuple2(seed, height), offset));
+
+  @override
+  Future<int> getCurrentStep(SecretKeyKesProduct sk) =>
+      _compute(_getCurrentStep, sk);
+
+  @override
+  Future<SignatureKesProduct> sign(SecretKeyKesProduct sk, List<int> message) =>
+      _compute((args) => _sign(args.first, args.second), Tuple2(sk, message));
+
+  @override
+  Future<SecretKeyKesProduct> update(SecretKeyKesProduct sk, int step) =>
+      _compute((args) => _update(args.first, args.second), Tuple2(sk, step));
+
+  @override
+  Future<bool> verify(SignatureKesProduct signature, List<int> message,
+          VerificationKeyKesProduct vk) =>
+      _compute(
+          (args) => _verify(args.first.first, args.first.second, args.second),
+          Tuple2(Tuple2(signature, message), vk));
+
+  @override
+  Future<VerificationKeyKesProduct> generateVerificationKey(
+          SecretKeyKesProduct sk) =>
+      _compute(_generateVerificationKey, sk);
 }

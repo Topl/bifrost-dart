@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:bifrost_crypto/impl/kes_product.dart';
 import 'package:bifrost_crypto/impl/kes_sum.dart';
 import 'package:bifrost_crypto/kes.dart';
 import 'package:bifrost_crypto/utils.dart';
@@ -94,7 +95,7 @@ void main() {
     test(
         "Test Vector - 1 - Generate and verify a specified product composition signature at t = [0, 1, 2, 3] using a provided seed, message, and heights of the two trees",
         () async {
-      final kesProduct = new KesProduct();
+      final kesProduct = KesProductImpl();
       final specIn_seed =
           "2a6367c85f416ccef46a4521004228f74f24f7b0770ecced07c0dc035135bf6f"
               .hexStringToBytes;

@@ -31,8 +31,6 @@ import 'package:bifrost_minting/interpreters/staking.dart';
 import 'package:bifrost_minting/interpreters/vrf_calculator.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:async/async.dart' show StreamGroup;
-import 'package:fpdart/fpdart.dart';
-import 'package:integral_isolates/integral_isolates.dart';
 import 'package:logging/logging.dart';
 import 'package:rational/rational.dart';
 import 'package:topl_protobuf/consensus/models/block_id.pb.dart';
@@ -70,16 +68,14 @@ class Blockchain {
   static Future<Blockchain> init() async {
     final log = Logger("Blockchain.Init");
     log.info("Launching isolates");
-    final operationalKeyMakerIsolated = Isolated();
-    final miscIsolated = Isolated();
 
     final genesisTimestamp =
         Int64(DateTime.now().millisecondsSinceEpoch + 10000);
 
     log.info("Genesis timestamp=$genesisTimestamp");
 
-    final stakerInitializers = await miscIsolated.isolate(
-        _initializeStakersTupled, Tuple2(genesisTimestamp, 1));
+    final stakerInitializers =
+        await PrivateTestnet.stakerInitializers(genesisTimestamp, 1);
 
     log.info("Staker initializers prepared");
 
@@ -112,7 +108,7 @@ class Blockchain {
     final ForwardBiasedSlotWindow = Int64(50);
 
     final clock = Clock(
-      Duration(milliseconds: 200),
+      Duration(milliseconds: 1000),
       EpochLength,
       genesisTimestamp,
       ForwardBiasedSlotWindow,
@@ -181,7 +177,6 @@ class Blockchain {
       etaCalculation,
       consensusValidationState,
       stakerInitializer.kesKeyPair.sk,
-      operationalKeyMakerIsolated.isolate,
     );
 
     log.info("Preparing LocalChain");
@@ -282,8 +277,4 @@ class Blockchain {
             fullBody: FullBlockBody(transactions: transactions));
         return fullBlock;
       });
-}
-
-_initializeStakersTupled(Tuple2<Int64, int> args) {
-  return PrivateTestnet.stakerInitializers(args.first, args.second);
 }

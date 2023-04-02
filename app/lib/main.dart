@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:async/async.dart';
 import 'package:bifrost_blockchain/blockchain.dart';
 import 'package:bifrost_codecs/codecs.dart';
+import 'package:bifrost_crypto/kes.dart' show kesProduct, KesProudctIsolated;
 import 'package:flutter/material.dart';
 import 'package:integral_isolates/integral_isolates.dart';
 import 'package:logging/logging.dart';
@@ -16,10 +17,9 @@ void main() {
     print(
         '${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}');
   });
-  final isolate1 = Isolated();
-  ed25519.ed25519 = ed25519.Ed25519Isolated(isolate1.isolate);
-  final isolate2 = Isolated();
-  ed25519VRF.ed25519Vrf = ed25519VRF.Ed25519VRFIsolated(isolate2.isolate);
+  ed25519.ed25519 = ed25519.Ed25519Isolated(Isolated().isolate);
+  ed25519VRF.ed25519Vrf = ed25519VRF.Ed25519VRFIsolated(Isolated().isolate);
+  kesProduct = KesProudctIsolated(Isolated().isolate);
 
   runApp(const MainApp());
 }

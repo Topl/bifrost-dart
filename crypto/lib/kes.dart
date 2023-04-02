@@ -2,6 +2,7 @@ export './impl/kes_product.dart'
     show
         kesProduct,
         KesProduct,
+        KesProudctIsolated,
         KeyPairKesProduct,
         SecretKeyKesProduct,
         TreeHeight;
