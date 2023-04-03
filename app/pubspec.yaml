@@ -12,6 +12,7 @@ dependencies:
   logging:
   async:
   integral_isolates: ^0.3.0+2
+  flutter_background: ^1.2.0
   bifrost_blockchain:
     path: ../blockchain
   bifrost_codecs:

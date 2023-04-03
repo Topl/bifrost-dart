@@ -26,12 +26,16 @@ class StakerInitializer {
 
   static Future<StakerInitializer> fromSeed(
       List<int> seed, TreeHeight treeHeight) async {
-    final operatorKeyPair = await ed25519.generateKeyPairFromSeed(seed);
-    final walletKeyPair = await ed25519.generateKeyPairFromSeed(seed);
-    final spendingKeyPair = await ed25519.generateKeyPairFromSeed(seed);
-    final vrfKeyPair = await ed25519Vrf.generateKeyPairFromSeed(seed);
-    final kesKeyPair =
-        await kesProduct.generateKeyPair(seed, treeHeight, Int64.ZERO);
+    final operatorKeyPair =
+        await ed25519.generateKeyPairFromSeed(await (seed + [1]).hash256);
+    final walletKeyPair =
+        await ed25519.generateKeyPairFromSeed(await (seed + [2]).hash256);
+    final spendingKeyPair =
+        await ed25519.generateKeyPairFromSeed(await (seed + [3]).hash256);
+    final vrfKeyPair =
+        await ed25519Vrf.generateKeyPairFromSeed(await (seed + [4]).hash256);
+    final kesKeyPair = await kesProduct.generateKeyPair(
+        await (seed + [5]).hash256, treeHeight, Int64.ZERO);
 
     return StakerInitializer(
       operatorKeyPair,

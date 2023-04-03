@@ -91,13 +91,13 @@ class BlockHeaderValidation extends BlockHeadervalidationAlgebra {
         SlotId(slot: header.parentSlot, blockId: header.parentHeaderId),
         header.slot);
     if (expectedEta != header.eligibilityCertificate.eta)
-      return ["InvalidEligibilityCertificate"];
+      return ["InvalidEligibilityCertificateEta"];
     final signatureVerification = await ed25519Vrf.verify(
       header.eligibilityCertificate.vrfSig,
       VrfArgument(expectedEta, header.slot).signableBytes,
       header.eligibilityCertificate.vrfVK,
     );
-    if (!signatureVerification) return ["InvalidEligibilityCertificateEta"];
+    if (!signatureVerification) return ["InvalidEligibilityCertificate"];
     return [];
   }
 

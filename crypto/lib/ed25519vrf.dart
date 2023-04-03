@@ -212,11 +212,9 @@ class Ed25519VRFImpl extends Ed25519VRF {
 
   Future<Int8List> _hashPoints(ec.PointAccum p1, ec.PointAccum p2,
       ec.PointAccum p3, ec.PointAccum p4) async {
-    final zero = [0x00];
-    final two = [0x02];
-    final str = <int>[]
-      ..addAll(suite)
-      ..addAll(two);
+    final zero = const [0x00];
+    final two = const [0x02];
+    final str = [...suite, ...two];
     final r = Int8List(ec.POINT_BYTES);
     ec.encodePoint(p1, r, 0);
     str.addAll(r);

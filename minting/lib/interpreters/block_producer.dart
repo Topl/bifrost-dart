@@ -96,7 +96,8 @@ class BlockProducer extends BlockProducerAlgebra {
     Int64 test = parentSlotId.slot + 1;
     final globalSlot = clock.globalSlot;
     if (globalSlot > test) test = globalSlot;
-    final exitSlot = test + 100000;
+    final exitSlot =
+        clock.epochRange(clock.epochOfSlot(parentSlotId.slot) + 1).second;
     VrfHit? maybeHit;
     while (maybeHit == null && test < exitSlot) {
       maybeHit = await staker.elect(parentSlotId, test);

@@ -25,9 +25,6 @@ class Clock extends ClockAlgebra {
   Int64 get forwardBiasedSlotWindow => _forwardBiasedSlotWindow;
 
   @override
-  Int64 get globalEpoch => globalSlot ~/ slotsPerEpoch;
-
-  @override
   Int64 get globalSlot => timestampToSlot(localTimestamp);
 
   @override

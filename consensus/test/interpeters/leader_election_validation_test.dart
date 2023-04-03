@@ -1,5 +1,6 @@
 import 'package:bifrost_consensus/interpreters/leader_election_validation.dart';
 import 'package:bifrost_consensus/models/vrf_config.dart';
+import 'package:bifrost_crypto/utils.dart';
 import 'package:convert/convert.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:rational/rational.dart';
@@ -16,7 +17,8 @@ void main() {
         baselineDifficulty: Rational.fromInt(1, 20),
         amplitude: Rational.fromInt(1, 2),
       );
-      final leaderElectionValidation = LeaderElectionValidation(config);
+      final leaderElectionValidation =
+          LeaderElectionValidation(config, LocalCompute);
       final threshold =
           await leaderElectionValidation.getThreshold(relativeStake, slotDiff);
       final expectedThreshold = Rational(

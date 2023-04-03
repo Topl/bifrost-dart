@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bifrost_blockchain/data_stores.dart';
 import 'package:bifrost_blockchain/genesis.dart';
+import 'package:bifrost_blockchain/isolate_pool.dart';
 import 'package:bifrost_blockchain/private_testnet.dart';
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/algebras/clock_algebra.dart';
@@ -31,6 +32,7 @@ import 'package:bifrost_minting/interpreters/staking.dart';
 import 'package:bifrost_minting/interpreters/vrf_calculator.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:async/async.dart' show StreamGroup;
+import 'package:integral_isolates/integral_isolates.dart';
 import 'package:logging/logging.dart';
 import 'package:rational/rational.dart';
 import 'package:topl_protobuf/consensus/models/block_id.pb.dart';
@@ -95,7 +97,7 @@ class Blockchain {
       amplitude: Rational.fromInt(1, 2),
     );
 
-    final ChainSelectionKLookback = Int64(50);
+    final ChainSelectionKLookback = Int64(100);
     final FEffective = Rational.fromInt(15, 100);
     final EpochLength = ChainSelectionKLookback * 6;
     final ChainSelectionSWindow =
@@ -108,7 +110,7 @@ class Blockchain {
     final ForwardBiasedSlotWindow = Int64(50);
 
     final clock = Clock(
-      Duration(milliseconds: 1000),
+      Duration(milliseconds: 200),
       EpochLength,
       genesisTimestamp,
       ForwardBiasedSlotWindow,
@@ -136,7 +138,8 @@ class Blockchain {
     final etaCalculation = EtaCalculation(dataStores.slotData.getOrRaise, clock,
         genesisBlock.header.eligibilityCertificate.eta);
 
-    final leaderElection = LeaderElectionValidation(vrfConfig);
+    final leaderElection =
+        LeaderElectionValidation(vrfConfig, IsolatePool(4).isolate);
 
     final vrfCalculator = VrfCalculator(
         stakerInitializer.vrfKeyPair.sk, clock, leaderElection, vrfConfig, 512);

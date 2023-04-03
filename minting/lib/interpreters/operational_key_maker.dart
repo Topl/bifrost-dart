@@ -146,7 +146,6 @@ class OperationalKeyMaker extends OperationalKeyMakerAlgebra {
       Slot fromSlot,
       SlotId parentSlotId,
       Rational relativeStake) async {
-    final epoch = clock.epochOfSlot(fromSlot);
     final eta = await etaCalculation.etaToBe(parentSlotId, fromSlot);
     final operationalPeriod = fromSlot ~/ operationalPeriodLength;
 
@@ -154,15 +153,11 @@ class OperationalKeyMaker extends OperationalKeyMakerAlgebra {
         operationalPeriod * operationalPeriodLength;
     final operationalPeriodSlotMax =
         (operationalPeriod + 1) * operationalPeriodLength;
-    log.info("Computing ineligible slots for" +
-        " epoch=$epoch" +
-        " eta=${eta.show}" +
-        " range=$operationalPeriodSlotMin..$operationalPeriodSlotMax");
     final ineligibleSlots = await vrfCalculator.ineligibleSlots(
-        epoch,
-        eta,
-        Tuple2(operationalPeriodSlotMin, operationalPeriodSlotMax),
-        relativeStake);
+      eta,
+      Tuple2(operationalPeriodSlotMin, operationalPeriodSlotMax),
+      relativeStake,
+    );
     final slots = List.generate(
             (operationalPeriodLength - (fromSlot % operationalPeriodLength))
                 .toInt(),
@@ -179,17 +174,15 @@ class OperationalKeyMaker extends OperationalKeyMakerAlgebra {
 
 Future<List<OperationalKeyOut>> _prepareOperationalPeriodKeysImpl(
     SecretKeyKesProduct kesParent, List<Slot> slots) async {
-  final result = <OperationalKeyOut>[];
   final parentVK = await kesProduct.generateVerificationKey(kesParent);
-  for (int i = 0; i < slots.length; i++) {
-    final slot = slots[i];
+  forSlot(Slot slot) async {
     final childKeyPair = await ed25519.generateKeyPair();
     final parentSignature = await kesProduct.sign(
       kesParent,
       childKeyPair.vk + slot.immutableBytes,
     );
-    result
-        .add(OperationalKeyOut(slot, childKeyPair, parentSignature, parentVK));
+    return OperationalKeyOut(slot, childKeyPair, parentSignature, parentVK);
   }
-  return result;
+
+  return Future.wait(slots.map(forSlot));
 }

@@ -20,12 +20,8 @@ extension RhoOps on Rho {
 }
 
 extension RatioOps on Rational {
-  List<int> get thresholdEvidence => blake2b256
-      .convert(<int>[]
-        ..addAll(numerator.bytes)
-        ..addAll(denominator.bytes))
-      .bytes
-      .int8List;
+  List<int> get thresholdEvidence =>
+      blake2b256.convert(numerator.bytes + denominator.bytes).bytes.int8List;
 }
 
 extension BlockHeaderOps on BlockHeader {

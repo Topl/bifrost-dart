@@ -1,25 +1,27 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:async/async.dart';
 import 'package:bifrost_blockchain/blockchain.dart';
+import 'package:bifrost_blockchain/isolate_pool.dart';
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_crypto/kes.dart' show kesProduct, KesProudctIsolated;
 import 'package:flutter/material.dart';
-import 'package:integral_isolates/integral_isolates.dart';
 import 'package:logging/logging.dart';
 import 'package:topl_protobuf/consensus/models/block_header.pb.dart';
 import 'package:bifrost_crypto/ed25519.dart' as ed25519;
 import 'package:bifrost_crypto/ed25519vrf.dart' as ed25519VRF;
+import 'package:flutter_background/flutter_background.dart';
 
-void main() {
+void main() async {
   Logger.root.level = Level.INFO;
   Logger.root.onRecord.listen((record) {
     print(
         '${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}');
   });
-  ed25519.ed25519 = ed25519.Ed25519Isolated(Isolated().isolate);
-  ed25519VRF.ed25519Vrf = ed25519VRF.Ed25519VRFIsolated(Isolated().isolate);
-  kesProduct = KesProudctIsolated(Isolated().isolate);
+  ed25519.ed25519 = ed25519.Ed25519Isolated(IsolatePool(4).isolate);
+  ed25519VRF.ed25519Vrf = ed25519VRF.Ed25519VRFIsolated(IsolatePool(4).isolate);
+  kesProduct = KesProudctIsolated(IsolatePool(4).isolate);
 
   runApp(const MainApp());
 }
@@ -58,6 +60,7 @@ class _BlockchainPageState extends State<BlockchainPage> {
     super.initState();
 
     Future<void> launch() async {
+      await _flutterBackgroundInit();
       final blockchain = await Blockchain.init();
       blockchain.run();
       setState(() => this.blockchain = blockchain);
@@ -65,6 +68,12 @@ class _BlockchainPageState extends State<BlockchainPage> {
     }
 
     unawaited(launch());
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    unawaited(_flutterBackgroundRelease());
   }
 
   @override
@@ -116,4 +125,26 @@ class _BlockchainPageState extends State<BlockchainPage> {
         ),
         separatorBuilder: (BuildContext context, int index) => const Divider(),
       );
+}
+
+_flutterBackgroundInit() async {
+  if (Platform.isAndroid) {
+    const androidConfig = FlutterBackgroundAndroidConfig(
+      notificationTitle: "Bifrost",
+      notificationText: "Blockchain is running in the background.",
+      notificationImportance: AndroidNotificationImportance.Default,
+      enableWifiLock: true,
+    );
+    bool success =
+        await FlutterBackground.initialize(androidConfig: androidConfig);
+
+    assert(success);
+    await FlutterBackground.enableBackgroundExecution();
+  }
+}
+
+_flutterBackgroundRelease() async {
+  if (Platform.isAndroid) {
+    await FlutterBackground.disableBackgroundExecution();
+  }
 }
