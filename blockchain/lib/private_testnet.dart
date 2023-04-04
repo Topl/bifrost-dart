@@ -5,7 +5,6 @@ import 'package:bifrost_blockchain/genesis.dart';
 import 'package:bifrost_blockchain/staker_initializer.dart';
 import 'package:bifrost_crypto/utils.dart';
 import 'package:fixnum/fixnum.dart';
-import 'package:rational/rational.dart';
 import 'package:topl_protobuf/brambl/models/address.pb.dart';
 import 'package:topl_protobuf/brambl/models/box/value.pb.dart';
 import 'package:topl_protobuf/brambl/models/transaction/unspent_transaction_output.pb.dart';
@@ -14,12 +13,12 @@ class PrivateTestnet {
   static final DefaultTotalStake = BigInt.from(10000000);
 
   static Future<List<StakerInitializer>> stakerInitializers(
-      Int64 timestamp, int stakerCount) async {
+      Int64 timestamp, int stakerCount, TreeHeight kesTreeHeight) async {
     assert(stakerCount >= 0);
     final out = <StakerInitializer>[];
     for (int i = 0; i < stakerCount; i++) {
       final seed = await (timestamp.immutableBytes + i.immutableBytes).hash256;
-      out.add(await StakerInitializer.fromSeed(seed, TreeHeight(9, 9)));
+      out.add(await StakerInitializer.fromSeed(seed, kesTreeHeight));
     }
     return out;
   }

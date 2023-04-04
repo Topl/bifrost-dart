@@ -7,12 +7,16 @@ import 'package:bifrost_blockchain/config.dart';
 import 'package:bifrost_blockchain/isolate_pool.dart';
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_crypto/kes.dart' show kesProduct, KesProudctIsolated;
+import 'package:bifrost_crypto/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:topl_protobuf/consensus/models/block_header.pb.dart';
 import 'package:bifrost_crypto/ed25519.dart' as ed25519;
 import 'package:bifrost_crypto/ed25519vrf.dart' as ed25519VRF;
 import 'package:flutter_background/flutter_background.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+
+var _isolate = LocalCompute;
 
 void main() async {
   Logger.root.level = Level.INFO;
@@ -20,9 +24,13 @@ void main() async {
     print(
         '${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}');
   });
-  ed25519.ed25519 = ed25519.Ed25519Isolated(IsolatePool(4).isolate);
-  ed25519VRF.ed25519Vrf = ed25519VRF.Ed25519VRFIsolated(IsolatePool(4).isolate);
-  kesProduct = KesProudctIsolated(IsolatePool(4).isolate);
+  if (!kIsWeb) {
+    final computePool = IsolatePool(Platform.numberOfProcessors);
+    _isolate = computePool.isolate;
+  }
+  ed25519.ed25519 = ed25519.Ed25519Isolated(_isolate);
+  ed25519VRF.ed25519Vrf = ed25519VRF.Ed25519VRFIsolated(_isolate);
+  kesProduct = KesProudctIsolated(_isolate);
 
   runApp(const MainApp());
 }
@@ -62,7 +70,8 @@ class _BlockchainPageState extends State<BlockchainPage> {
 
     Future<void> launch() async {
       await _flutterBackgroundInit();
-      final blockchain = await Blockchain.init(BlockchainConfig.defaultConfig);
+      final blockchain =
+          await Blockchain.init(BlockchainConfig.defaultConfig, _isolate);
       blockchain.run();
       setState(() => this.blockchain = blockchain);
       return;
@@ -129,7 +138,7 @@ class _BlockchainPageState extends State<BlockchainPage> {
 }
 
 _flutterBackgroundInit() async {
-  if (Platform.isAndroid) {
+  if (!kIsWeb && Platform.isAndroid) {
     const androidConfig = FlutterBackgroundAndroidConfig(
       notificationTitle: "Bifrost",
       notificationText: "Blockchain is running in the background.",
@@ -145,7 +154,7 @@ _flutterBackgroundInit() async {
 }
 
 _flutterBackgroundRelease() async {
-  if (Platform.isAndroid) {
+  if (!kIsWeb && Platform.isAndroid) {
     await FlutterBackground.disableBackgroundExecution();
   }
 }

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:bifrost_blockchain/config.dart';
 import 'package:bifrost_blockchain/data_stores.dart';
-import 'package:bifrost_blockchain/isolate_pool.dart';
 import 'package:bifrost_blockchain/private_testnet.dart';
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/algebras/clock_algebra.dart';
@@ -22,6 +21,8 @@ import 'package:bifrost_consensus/interpreters/leader_election_validation.dart';
 import 'package:bifrost_consensus/interpreters/local_chain.dart';
 import 'package:bifrost_consensus/models/vrf_config.dart';
 import 'package:bifrost_consensus/utils.dart';
+import 'package:bifrost_crypto/kes.dart';
+import 'package:bifrost_crypto/utils.dart';
 import 'package:bifrost_minting/algebras/block_producer_algebra.dart';
 import 'package:bifrost_minting/interpreters/block_packer.dart';
 import 'package:bifrost_minting/interpreters/block_producer.dart';
@@ -30,8 +31,8 @@ import 'package:bifrost_minting/interpreters/operational_key_maker.dart';
 import 'package:bifrost_minting/interpreters/staking.dart';
 import 'package:bifrost_minting/interpreters/vrf_calculator.dart';
 import 'package:fixnum/fixnum.dart';
-import 'package:async/async.dart' show StreamGroup;
 import 'package:logging/logging.dart';
+import 'package:rxdart/streams.dart';
 import 'package:topl_protobuf/consensus/models/block_id.pb.dart';
 import 'package:topl_protobuf/node/models/block.pb.dart';
 
@@ -62,16 +63,19 @@ class Blockchain {
     this.blockProducer,
   );
 
-  static Future<Blockchain> init(BlockchainConfig config) async {
+  static Future<Blockchain> init(
+      BlockchainConfig config, DComputeImpl isolate) async {
     final log = Logger("Blockchain.Init");
-    log.info("Launching isolates");
 
     final genesisTimestamp = config.genesis.timestamp;
 
     log.info("Genesis timestamp=$genesisTimestamp");
 
     final stakerInitializers = await PrivateTestnet.stakerInitializers(
-        genesisTimestamp, config.genesis.stakerCount);
+        genesisTimestamp,
+        config.genesis.stakerCount,
+        TreeHeight(
+            config.consensus.kesKeyHours, config.consensus.kesKeyMinutes));
 
     log.info("Staker initializers prepared");
 
@@ -121,8 +125,7 @@ class Blockchain {
     final etaCalculation = EtaCalculation(dataStores.slotData.getOrRaise, clock,
         genesisBlock.header.eligibilityCertificate.eta);
 
-    final leaderElection =
-        LeaderElectionValidation(vrfConfig, IsolatePool(4).isolate);
+    final leaderElection = LeaderElectionValidation(vrfConfig, isolate);
 
     final vrfCalculator = VrfCalculator(
         stakerInitializer.vrfKeyPair.sk, clock, leaderElection, vrfConfig);
@@ -197,8 +200,9 @@ class Blockchain {
     log.info("Preparing BlockProducer");
 
     final blockProducer = BlockProducer(
-      StreamGroup.merge([
-        Stream.value(canonicalHeadSlotData),
+      ConcatStream([
+        Stream.value(canonicalHeadSlotData).asyncMap(
+            (d) => clock.delayedUntilSlot(d.slotId.slot).then((_) => d)),
         localChain.adoptions.asyncMap(dataStores.slotData.getOrRaise),
       ]),
       staker,

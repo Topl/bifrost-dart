@@ -27,7 +27,7 @@ class OperationalKeyMaker extends OperationalKeyMakerAlgebra {
   final VrfCalculatorAlgebra vrfCalculator;
   final EtaCalculationAlgebra etaCalculation;
   final ConsensusValidationStateAlgebra consensusValidationState;
-  Int64 currentOperationalPeriod;
+  Int64? currentOperationalPeriod;
   Map<Int64, OperationalKeyOut>? currentKeyCache;
 
   final log = Logger("OperationalKeyMaker");
@@ -59,7 +59,6 @@ class OperationalKeyMaker extends OperationalKeyMakerAlgebra {
   ) async {
     Int64 slot = clock.globalSlot;
     if (slot < 0) slot = Int64.ZERO;
-    final operationalPeriod = slot ~/ operationalPeriodLength;
     final impl = OperationalKeyMaker(
       operationalPeriodLength,
       activationOperationalPeriod,
@@ -69,22 +68,10 @@ class OperationalKeyMaker extends OperationalKeyMakerAlgebra {
       vrfCalculator,
       etaCalculation,
       consensusValidationState,
-      operationalPeriod,
+      null,
       null,
     );
-
     await secureStore.write("k", initialSK.encode);
-
-    final relativeStake = await consensusValidationState.operatorRelativeStake(
-        parentSlotId.blockId, slot, address);
-    if (relativeStake != null) {
-      final initialKeysOpt = await impl._consumeEvolvePersist(
-          (operationalPeriod - activationOperationalPeriod).toInt(),
-          (t) => impl._prepareOperationalPeriodKeys(
-              t, slot, parentSlotId, relativeStake));
-      impl.currentKeyCache = initialKeysOpt;
-      impl.currentOperationalPeriod = operationalPeriod;
-    }
     return impl;
   }
 

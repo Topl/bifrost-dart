@@ -14,12 +14,12 @@ class Clock extends ClockAlgebra {
       this._forwardBiasedSlotWindow);
 
   @override
-  Timer delayedUntilSlot(Int64 slot) =>
+  Future<void> delayedUntilSlot(Int64 slot) =>
       delayedUntilTimestamp(slotToTimestamps(slot).first);
 
   @override
-  Timer delayedUntilTimestamp(Int64 timestamp) => Timer(
-      Duration(milliseconds: (timestamp - localTimestamp).toInt()), () {});
+  Future<void> delayedUntilTimestamp(Int64 timestamp) => Future.delayed(
+      Duration(milliseconds: (timestamp - localTimestamp).toInt()));
 
   @override
   Int64 get forwardBiasedSlotWindow => _forwardBiasedSlotWindow;

@@ -12,8 +12,8 @@ abstract class ClockAlgebra {
   Int64 timestampToSlot(Int64 timestamp);
   // Returns an inclusive range (minimum, maximum) of valid timestamps for the given slot
   Tuple2<Int64, Int64> slotToTimestamps(Int64 slot);
-  Timer delayedUntilSlot(Int64 slot);
-  Timer delayedUntilTimestamp(Int64 timestamp);
+  Future<void> delayedUntilSlot(Int64 slot);
+  Future<void> delayedUntilTimestamp(Int64 timestamp);
 
   Int64 epochOfSlot(Int64 slot) => slot ~/ slotsPerEpoch;
   Int64 get globalEpoch => epochOfSlot(globalSlot);

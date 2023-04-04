@@ -3,15 +3,15 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i4;
+import 'dart:async' as _i6;
 
-import 'package:bifrost_common/algebras/clock_algebra.dart' as _i6;
+import 'package:bifrost_common/algebras/clock_algebra.dart' as _i5;
 import 'package:bifrost_consensus/algebras/leader_election_validation_algebra.dart'
     as _i7;
 import 'package:fixnum/fixnum.dart' as _i2;
 import 'package:fpdart/fpdart.dart' as _i3;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:rational/rational.dart' as _i5;
+import 'package:rational/rational.dart' as _i4;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -55,18 +55,8 @@ class _FakeTuple2_2<T1, T2> extends _i1.SmartFake
         );
 }
 
-class _FakeTimer_3 extends _i1.SmartFake implements _i4.Timer {
-  _FakeTimer_3(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
-}
-
-class _FakeRational_4 extends _i1.SmartFake implements _i5.Rational {
-  _FakeRational_4(
+class _FakeRational_3 extends _i1.SmartFake implements _i4.Rational {
+  _FakeRational_3(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -78,7 +68,7 @@ class _FakeRational_4 extends _i1.SmartFake implements _i5.Rational {
 /// A class which mocks [ClockAlgebra].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockClockAlgebra extends _i1.Mock implements _i6.ClockAlgebra {
+class MockClockAlgebra extends _i1.Mock implements _i5.ClockAlgebra {
   @override
   Duration get slotLength => (super.noSuchMethod(
         Invocation.getter(#slotLength),
@@ -101,18 +91,6 @@ class MockClockAlgebra extends _i1.Mock implements _i6.ClockAlgebra {
         returnValueForMissingStub: _FakeInt64_1(
           this,
           Invocation.getter(#slotsPerEpoch),
-        ),
-      ) as _i2.Int64);
-  @override
-  _i2.Int64 get globalEpoch => (super.noSuchMethod(
-        Invocation.getter(#globalEpoch),
-        returnValue: _FakeInt64_1(
-          this,
-          Invocation.getter(#globalEpoch),
-        ),
-        returnValueForMissingStub: _FakeInt64_1(
-          this,
-          Invocation.getter(#globalEpoch),
         ),
       ) as _i2.Int64);
   @override
@@ -149,6 +127,18 @@ class MockClockAlgebra extends _i1.Mock implements _i6.ClockAlgebra {
         returnValueForMissingStub: _FakeInt64_1(
           this,
           Invocation.getter(#forwardBiasedSlotWindow),
+        ),
+      ) as _i2.Int64);
+  @override
+  _i2.Int64 get globalEpoch => (super.noSuchMethod(
+        Invocation.getter(#globalEpoch),
+        returnValue: _FakeInt64_1(
+          this,
+          Invocation.getter(#globalEpoch),
+        ),
+        returnValueForMissingStub: _FakeInt64_1(
+          this,
+          Invocation.getter(#globalEpoch),
         ),
       ) as _i2.Int64);
   @override
@@ -195,47 +185,24 @@ class MockClockAlgebra extends _i1.Mock implements _i6.ClockAlgebra {
         ),
       ) as _i3.Tuple2<_i2.Int64, _i2.Int64>);
   @override
-  _i4.Timer delayedUntilSlot(_i2.Int64? slot) => (super.noSuchMethod(
+  _i6.Future<void> delayedUntilSlot(_i2.Int64? slot) => (super.noSuchMethod(
         Invocation.method(
           #delayedUntilSlot,
           [slot],
         ),
-        returnValue: _FakeTimer_3(
-          this,
-          Invocation.method(
-            #delayedUntilSlot,
-            [slot],
-          ),
-        ),
-        returnValueForMissingStub: _FakeTimer_3(
-          this,
-          Invocation.method(
-            #delayedUntilSlot,
-            [slot],
-          ),
-        ),
-      ) as _i4.Timer);
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
   @override
-  _i4.Timer delayedUntilTimestamp(_i2.Int64? timestamp) => (super.noSuchMethod(
+  _i6.Future<void> delayedUntilTimestamp(_i2.Int64? timestamp) =>
+      (super.noSuchMethod(
         Invocation.method(
           #delayedUntilTimestamp,
           [timestamp],
         ),
-        returnValue: _FakeTimer_3(
-          this,
-          Invocation.method(
-            #delayedUntilTimestamp,
-            [timestamp],
-          ),
-        ),
-        returnValueForMissingStub: _FakeTimer_3(
-          this,
-          Invocation.method(
-            #delayedUntilTimestamp,
-            [timestamp],
-          ),
-        ),
-      ) as _i4.Timer);
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
   @override
   _i2.Int64 epochOfSlot(_i2.Int64? slot) => (super.noSuchMethod(
         Invocation.method(
@@ -287,8 +254,8 @@ class MockClockAlgebra extends _i1.Mock implements _i6.ClockAlgebra {
 class MockLeaderElectionValidationAlgebra extends _i1.Mock
     implements _i7.LeaderElectionValidationAlgebra {
   @override
-  _i4.Future<_i5.Rational> getThreshold(
-    _i5.Rational? relativeStake,
+  _i6.Future<_i4.Rational> getThreshold(
+    _i4.Rational? relativeStake,
     _i2.Int64? slotDiff,
   ) =>
       (super.noSuchMethod(
@@ -299,7 +266,7 @@ class MockLeaderElectionValidationAlgebra extends _i1.Mock
             slotDiff,
           ],
         ),
-        returnValue: _i4.Future<_i5.Rational>.value(_FakeRational_4(
+        returnValue: _i6.Future<_i4.Rational>.value(_FakeRational_3(
           this,
           Invocation.method(
             #getThreshold,
@@ -310,7 +277,7 @@ class MockLeaderElectionValidationAlgebra extends _i1.Mock
           ),
         )),
         returnValueForMissingStub:
-            _i4.Future<_i5.Rational>.value(_FakeRational_4(
+            _i6.Future<_i4.Rational>.value(_FakeRational_3(
           this,
           Invocation.method(
             #getThreshold,
@@ -320,10 +287,10 @@ class MockLeaderElectionValidationAlgebra extends _i1.Mock
             ],
           ),
         )),
-      ) as _i4.Future<_i5.Rational>);
+      ) as _i6.Future<_i4.Rational>);
   @override
-  _i4.Future<bool> isSlotLeaderForThreshold(
-    _i5.Rational? threshold,
+  _i6.Future<bool> isSlotLeaderForThreshold(
+    _i4.Rational? threshold,
     List<int>? rho,
   ) =>
       (super.noSuchMethod(
@@ -334,7 +301,7 @@ class MockLeaderElectionValidationAlgebra extends _i1.Mock
             rho,
           ],
         ),
-        returnValue: _i4.Future<bool>.value(false),
-        returnValueForMissingStub: _i4.Future<bool>.value(false),
-      ) as _i4.Future<bool>);
+        returnValue: _i6.Future<bool>.value(false),
+        returnValueForMissingStub: _i6.Future<bool>.value(false),
+      ) as _i6.Future<bool>);
 }
