@@ -16,15 +16,14 @@ class VrfCalculator extends VrfCalculatorAlgebra {
   final ClockAlgebra clock;
   final LeaderElectionValidationAlgebra leaderElectionValidation;
   final VrfConfig vrfConfig;
-  final int vrfCacheSize;
 
   final log = Logger("VrfCalculator");
 
   Map<Tuple2<List<int>, Int64>, List<int>> _vrfProofsCache = {};
   Map<Tuple2<List<int>, Int64>, List<int>> _rhosCache = {};
 
-  VrfCalculator(this.skVrf, this.clock, this.leaderElectionValidation,
-      this.vrfConfig, this.vrfCacheSize);
+  VrfCalculator(
+      this.skVrf, this.clock, this.leaderElectionValidation, this.vrfConfig);
 
   @override
   Future<List<Int64>> ineligibleSlots(List<int> eta,

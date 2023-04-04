@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:async/async.dart';
 import 'package:bifrost_blockchain/blockchain.dart';
+import 'package:bifrost_blockchain/config.dart';
 import 'package:bifrost_blockchain/isolate_pool.dart';
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_crypto/kes.dart' show kesProduct, KesProudctIsolated;
@@ -61,7 +62,7 @@ class _BlockchainPageState extends State<BlockchainPage> {
 
     Future<void> launch() async {
       await _flutterBackgroundInit();
-      final blockchain = await Blockchain.init();
+      final blockchain = await Blockchain.init(BlockchainConfig.defaultConfig);
       blockchain.run();
       setState(() => this.blockchain = blockchain);
       return;

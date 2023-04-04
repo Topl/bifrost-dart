@@ -25,10 +25,8 @@ class PrivateTestnet {
   }
 
   static Future<GenesisConfig> config(Int64 timestamp,
-      List<StakerInitializer> stakers, List<BigInt>? stakes) async {
-    final someStakes = stakes ??
-        List.filled(stakers.length,
-            Rational(DefaultTotalStake, BigInt.from(stakers.length)).round());
+      List<StakerInitializer> stakers, List<BigInt> stakes) async {
+    assert(stakers.length == stakes.length);
     final outputs = [
       UnspentTransactionOutput(
           address: HeightLockOneSpendingAddress,
@@ -37,7 +35,7 @@ class PrivateTestnet {
     ];
     for (int i = 0; i < stakers.length; i++) {
       final staker = stakers[i];
-      final stake = someStakes[i];
+      final stake = stakes[i];
       final genesisOutputs = await staker.genesisOutputs(stake.toInt128);
       outputs.addAll(genesisOutputs);
     }

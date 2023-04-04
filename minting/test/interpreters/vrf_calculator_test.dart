@@ -26,7 +26,7 @@ void main() {
         amplitude: Rational.fromInt(1, 2),
       );
       final calculator = VrfCalculator(skVrf, MockClockAlgebra(),
-          MockLeaderElectionValidationAlgebra(), config, 100);
+          MockLeaderElectionValidationAlgebra(), config);
 
       final eta = Int8List(32);
       final proof = await calculator.proofForSlot(Int64(10), eta);
