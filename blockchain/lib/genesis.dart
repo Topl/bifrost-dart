@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_crypto/utils.dart';
+import 'package:brambl/brambl.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:topl_protobuf/brambl/models/transaction/io_transaction.pb.dart';
 import 'package:topl_protobuf/brambl/models/transaction/unspent_transaction_output.pb.dart';
@@ -26,7 +27,7 @@ class GenesisConfig {
     final transaction = IoTransaction(outputs: outputs);
     final transactions = [transaction];
     final eta =
-        await (etaPrefix + (await transaction.id.evidence.digest.value.hash256))
+        await (etaPrefix + ((await transaction.id).evidence.digest.value))
             .hash256;
     final eligibilityCertificate = EligibilityCertificate(
       vrfSig: _emptyBytes(80),

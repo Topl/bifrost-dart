@@ -30,6 +30,7 @@ import 'package:bifrost_minting/interpreters/in_memory_secure_store.dart';
 import 'package:bifrost_minting/interpreters/operational_key_maker.dart';
 import 'package:bifrost_minting/interpreters/staking.dart';
 import 'package:bifrost_minting/interpreters/vrf_calculator.dart';
+import 'package:brambl/brambl.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:logging/logging.dart';
 import 'package:rxdart/streams.dart';
@@ -240,8 +241,10 @@ class Blockchain {
     if (headerValidationErrors.isNotEmpty) {
       throw Exception("Invalid block. reason=$headerValidationErrors");
     } else {
-      final body = BlockBody(
-          transactionIds: block.fullBody.transactions.map((t) => t.id));
+      final body = BlockBody(transactionIds: [
+        for (final transaction in block.fullBody.transactions)
+          await transaction.id
+      ]);
       await dataStores.bodies.put(id, body);
       if (await chainSelection.select(id, await localChain.currentHead) == id) {
         log.info("Adopting id=${id.show}");

@@ -15,12 +15,6 @@ import 'package:topl_protobuf/consensus/models/operational_certificate.pb.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:topl_protobuf/quivr/models/shared.pb.dart';
 
-extension IoTransactionCodecs on IoTransaction {
-  // TODO
-  Identifier_IoTransaction32 get id => Identifier_IoTransaction32(
-      evidence: Evidence_Sized32(digest: Digest_Digest32(value: Int8List(32))));
-}
-
 extension BlockHeaderCodecs on BlockHeader {
   List<int> get immutableBytes => <int>[]
     ..addAll(parentHeaderId.value)

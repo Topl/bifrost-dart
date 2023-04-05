@@ -1,6 +1,7 @@
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/interpreters/in_memory_store.dart';
 import 'package:bifrost_consensus/utils.dart';
+import 'package:brambl/brambl.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:topl_protobuf/brambl/models/identifier.pb.dart';
@@ -78,12 +79,15 @@ class DataStores {
         .put(genesisBlockId, await genesisBlock.header.slotData);
     await stores.headers.put(genesisBlockId, genesisBlock.header);
     await stores.bodies.put(
-      genesisBlockId,
-      BlockBody(
-          transactionIds: genesisBlock.fullBody.transactions.map((t) => t.id)),
-    );
+        genesisBlockId,
+        BlockBody(
+          transactionIds: [
+            for (final transaction in genesisBlock.fullBody.transactions)
+              await transaction.id
+          ],
+        ));
     for (final transaction in genesisBlock.fullBody.transactions) {
-      await stores.transactions.put(transaction.id, transaction);
+      await stores.transactions.put(await transaction.id, transaction);
     }
     await stores.blockHeightTree
         .put(Int64(0), genesisBlock.header.parentHeaderId);

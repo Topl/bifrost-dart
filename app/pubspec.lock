@@ -89,6 +89,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.1"
+  brambl:
+    dependency: transitive
+    description:
+      path: "../brambl"
+      relative: true
+    source: path
+    version: "1.0.0+1"
   characters:
     dependency: transitive
     description:
@@ -347,6 +354,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
+  quivr:
+    dependency: transitive
+    description:
+      path: "../quivr"
+      relative: true
+    source: path
+    version: "1.0.0+1"
   rational:
     dependency: transitive
     description:

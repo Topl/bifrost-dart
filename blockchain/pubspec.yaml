@@ -36,5 +36,7 @@ dependencies:
     path: ../p2p
   bifrost_crypto:
     path: ../crypto
+  brambl:
+    path: ../brambl
 dev_dependencies:    
   build_runner: ^2.3.3
