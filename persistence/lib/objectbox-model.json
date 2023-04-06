@@ -1,0 +1,102 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:3664607132397035837",
+      "lastPropertyId": "13:5440393938186108912",
+      "name": "ObjectBoxBlockHeader",
+      "properties": [
+        {
+          "id": "1:5358456951643608238",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:85710295399860715",
+          "name": "idBase58",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "1:7046296754471513199"
+        },
+        {
+          "id": "3:4359215976293910436",
+          "name": "parentHeaderIdBase58",
+          "type": 9,
+          "flags": 2048,
+          "indexId": "2:7982904071071602753"
+        },
+        {
+          "id": "4:943472509132905055",
+          "name": "parentSlot",
+          "type": 6
+        },
+        {
+          "id": "5:2240875402453596034",
+          "name": "txRoot",
+          "type": 23
+        },
+        {
+          "id": "6:2810280279882837314",
+          "name": "bloomFilter",
+          "type": 23
+        },
+        {
+          "id": "7:7880751880541911141",
+          "name": "timestamp",
+          "type": 6
+        },
+        {
+          "id": "8:5911719175229829070",
+          "name": "height",
+          "type": 6,
+          "flags": 8,
+          "indexId": "3:9177321568921214767"
+        },
+        {
+          "id": "9:4081282826031828307",
+          "name": "slot",
+          "type": 6,
+          "flags": 8,
+          "indexId": "4:7785980242825407830"
+        },
+        {
+          "id": "10:5305069945474295606",
+          "name": "eligibilityCertificate",
+          "type": 23
+        },
+        {
+          "id": "11:3456973625319493298",
+          "name": "operationalCertificate",
+          "type": 23
+        },
+        {
+          "id": "12:806823708538527002",
+          "name": "metadata",
+          "type": 23
+        },
+        {
+          "id": "13:5440393938186108912",
+          "name": "address",
+          "type": 9,
+          "flags": 2048,
+          "indexId": "5:3428022056740544691"
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "1:3664607132397035837",
+  "lastIndexId": "5:3428022056740544691",
+  "lastRelationId": "0:0",
+  "lastSequenceId": "0:0",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [],
+  "retiredRelationUids": [],
+  "version": 1
+}

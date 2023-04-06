@@ -6,7 +6,7 @@ import 'package:bifrost_blockchain/blockchain.dart';
 import 'package:bifrost_blockchain/config.dart';
 import 'package:bifrost_blockchain/isolate_pool.dart';
 import 'package:bifrost_codecs/codecs.dart';
-import 'package:bifrost_crypto/kes.dart' show kesProduct, KesProudctIsolated;
+import 'package:bifrost_crypto/kes.dart' as kes;
 import 'package:bifrost_crypto/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
@@ -30,7 +30,9 @@ void main() async {
   }
   ed25519.ed25519 = ed25519.Ed25519Isolated(_isolate);
   ed25519VRF.ed25519Vrf = ed25519VRF.Ed25519VRFIsolated(_isolate);
-  kesProduct = KesProudctIsolated(_isolate);
+  kes.kesProduct = kes.KesProudctIsolated(_isolate);
+
+  WidgetsFlutterBinding.ensureInitialized();
 
   runApp(const MainApp());
 }

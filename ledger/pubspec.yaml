@@ -15,6 +15,7 @@ dependencies:
   async: ^2.10.0
   rational: ^2.2.2
   fpdart: ^0.3.0
+  hashlib: 
   logging:
   topl_protobuf:
     path: ../../protobuf-specs/build/dart

@@ -32,10 +32,12 @@ dependencies:
     path: ../codecs
   bifrost_grpc:
     path: ../grpc
-  bifrost_p2p:
-    path: ../p2p
+  bifrost_ledger:
+    path: ../ledger
   bifrost_crypto:
     path: ../crypto
+  bifrost_persistence:
+    path: ../persistence
   brambl:
     path: ../brambl
 dev_dependencies:    

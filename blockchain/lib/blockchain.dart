@@ -3,15 +3,14 @@ import 'dart:async';
 import 'package:bifrost_blockchain/config.dart';
 import 'package:bifrost_blockchain/data_stores.dart';
 import 'package:bifrost_blockchain/private_testnet.dart';
+import 'package:bifrost_blockchain/validators.dart';
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/algebras/clock_algebra.dart';
 import 'package:bifrost_common/algebras/parent_child_tree_algebra.dart';
 import 'package:bifrost_common/interpreters/clock.dart';
 import 'package:bifrost_common/interpreters/parent_child_tree.dart';
-import 'package:bifrost_consensus/algebras/block_header_validation_algebra.dart';
 import 'package:bifrost_consensus/algebras/consensus_validation_state_algebra.dart';
 import 'package:bifrost_consensus/algebras/leader_election_validation_algebra.dart';
-import 'package:bifrost_consensus/interpreters/block_header_validation.dart';
 import 'package:bifrost_consensus/interpreters/chain_selection.dart';
 import 'package:bifrost_consensus/interpreters/consensus_data_event_sourced_state.dart';
 import 'package:bifrost_consensus/interpreters/consensus_validation_state.dart';
@@ -23,6 +22,8 @@ import 'package:bifrost_consensus/models/vrf_config.dart';
 import 'package:bifrost_consensus/utils.dart';
 import 'package:bifrost_crypto/kes.dart';
 import 'package:bifrost_crypto/utils.dart';
+import 'package:bifrost_ledger/interpreters/quivr_context.dart';
+import 'package:bifrost_ledger/models/body_validation_context.dart';
 import 'package:bifrost_minting/algebras/block_producer_algebra.dart';
 import 'package:bifrost_minting/interpreters/block_packer.dart';
 import 'package:bifrost_minting/interpreters/block_producer.dart';
@@ -46,7 +47,7 @@ class Blockchain {
   final ConsensusValidationStateAlgebra consensusValidationState;
   final LocalChain localChain;
   final ChainSelection chainSelection;
-  final BlockHeadervalidationAlgebra blockHeaderValidation;
+  final Validators validators;
   final BlockProducerAlgebra blockProducer;
 
   final log = Logger("Blockchain");
@@ -60,7 +61,7 @@ class Blockchain {
     this.consensusValidationState,
     this.localChain,
     this.chainSelection,
-    this.blockHeaderValidation,
+    this.validators,
     this.blockProducer,
   );
 
@@ -176,15 +177,18 @@ class Blockchain {
 
     final chainSelection = ChainSelection(dataStores.slotData.getOrRaise);
 
-    log.info("Preparing Header Validation");
+    log.info("Preparing Validators");
 
-    final blockHeaderValidation = BlockHeaderValidation(
-        genesisBlockId,
-        etaCalculation,
-        consensusValidationState,
-        leaderElection,
-        clock,
-        dataStores.headers.getOrRaise);
+    final validators = Validators.make(
+      dataStores,
+      genesisBlockId,
+      currentEventIdGetterSetters,
+      parentChildTree,
+      etaCalculation,
+      consensusValidationState,
+      leaderElection,
+      clock,
+    );
 
     log.info("Preparing Staking");
 
@@ -222,7 +226,7 @@ class Blockchain {
       consensusValidationState,
       localChain,
       chainSelection,
-      blockHeaderValidation,
+      validators,
       blockProducer,
     );
 
@@ -232,25 +236,48 @@ class Blockchain {
   Future<void> processBlock(FullBlock block) async {
     final id = await block.header.id;
 
+    final body = BlockBody(transactionIds: [
+      for (final transaction in block.fullBody.transactions)
+        await transaction.id
+    ]);
+    await validateBlock(id, Block(header: block.header, body: body));
+    await dataStores.bodies.put(id, body);
+    if (await chainSelection.select(id, await localChain.currentHead) == id) {
+      log.info("Adopting id=${id.show}");
+      localChain.adopt(id);
+    }
+  }
+
+  Future<void> validateBlock(BlockId id, Block block) async {
     await parentChildTree.assocate(id, block.header.parentHeaderId);
     await dataStores.slotData.put(id, await block.header.slotData);
     await dataStores.headers.put(id, block.header);
 
-    final headerValidationErrors =
-        await blockHeaderValidation.validate(block.header);
-    if (headerValidationErrors.isNotEmpty) {
-      throw Exception("Invalid block. reason=$headerValidationErrors");
-    } else {
-      final body = BlockBody(transactionIds: [
-        for (final transaction in block.fullBody.transactions)
-          await transaction.id
-      ]);
-      await dataStores.bodies.put(id, body);
-      if (await chainSelection.select(id, await localChain.currentHead) == id) {
-        log.info("Adopting id=${id.show}");
-        localChain.adopt(id);
+    final errors = await validators.header.validate(block.header);
+    throwErrors() async {
+      if (errors.isNotEmpty) {
+        // TODO: ParentChildTree disassociate
+        await dataStores.slotData.remove(id);
+        await dataStores.headers.remove(id);
+        throw Exception("Invalid block. reason=$errors");
       }
     }
+
+    await throwErrors();
+
+    errors.addAll(await validators.bodySyntax.validate(block.body));
+    await throwErrors();
+    final bodyValidationContext = BodyValidationContext(
+        block.header.parentHeaderId, block.header.height, block.header.slot);
+    errors.addAll(await validators.bodySemantic
+        .validate(block.body, bodyValidationContext));
+    await throwErrors();
+    errors.addAll(await validators.bodyAuthorization.validate(
+      block.body,
+      (tx) async =>
+          QuivrContextForConstructedBlock(block.header, await tx.signableBytes),
+    ));
+    await throwErrors();
   }
 
   void run() {

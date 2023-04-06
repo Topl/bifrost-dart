@@ -3,7 +3,7 @@ import 'package:bifrost_common/algebras/store_algebra.dart';
 import 'package:bifrost_common/interpreters/event_tree_state.dart';
 import 'package:bifrost_common/interpreters/parent_child_tree.dart';
 import 'package:bifrost_common/models/common.dart';
-import 'package:bifrost_ledger/src/algebras/box_state_algebra.dart';
+import 'package:bifrost_ledger/algebras/box_state_algebra.dart';
 import 'package:brambl/brambl.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:topl_protobuf/brambl/models/address.pb.dart';
@@ -28,14 +28,14 @@ class BoxState extends BoxStateAlgebra {
     return spendableIndices != null && spendableIndices.contains(boxId.index);
   }
 
-  static EventSourcedStateAlgebra<State, BlockId> createEventSourcedState(
+  factory BoxState.make(
       State initialState,
       BlockId currentBlockId,
       Future<BlockBody> Function(BlockId) fetchBlockBody,
       Future<IoTransaction> Function(TransactionId) fetchTransaction,
       ParentChildTree<BlockId> parentChildTree,
       Future<void> Function(BlockId) currentEventChanged) {
-    return EventTreeState<State, BlockId>(
+    final eventState = EventTreeState<State, BlockId>(
       (state, blockId) => _applyBlock(
         fetchBlockBody,
         fetchTransaction,
@@ -53,6 +53,7 @@ class BoxState extends BoxStateAlgebra {
       currentBlockId,
       currentEventChanged,
     );
+    return BoxState(eventState);
   }
 }
 

@@ -1,6 +1,7 @@
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/interpreters/in_memory_store.dart';
 import 'package:bifrost_consensus/utils.dart';
+import 'package:bifrost_persistence/header_store.dart';
 import 'package:brambl/brambl.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:fpdart/fpdart.dart';
@@ -21,7 +22,7 @@ class DataStores {
   final StoreAlgebra<BlockId, BlockHeader> headers;
   final StoreAlgebra<BlockId, BlockBody> bodies;
   final StoreAlgebra<Identifier_IoTransaction32, IoTransaction> transactions;
-  final StoreAlgebra<Identifier_IoTransaction32, Set<int>> spendableBoxIds;
+  final StoreAlgebra<Identifier_IoTransaction32, List<int>> spendableBoxIds;
   final StoreAlgebra<Int64, BlockId> epochBoundaries;
   final StoreAlgebra<StakingAddress, BigInt> operatorStakes;
   final StoreAlgebra<void, BigInt> activeStake;
@@ -50,7 +51,7 @@ class DataStores {
       parentChildTree: makeDb(),
       currentEventIds: makeDb(),
       slotData: makeDb(),
-      headers: makeDb(),
+      headers: (await HeaderStore.create()).store,
       bodies: makeDb(),
       transactions: makeDb(),
       spendableBoxIds: makeDb(),
