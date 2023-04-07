@@ -2,7 +2,8 @@ import 'package:bifrost_common/models/common.dart';
 import 'package:bifrost_ledger/algebras/transaction_semantic_validation_algebra.dart';
 import 'package:bifrost_ledger/interpreters/box_state.dart';
 import 'package:bifrost_ledger/models/transaction_validation_context.dart';
-import 'package:topl_protobuf/brambl/models/evidence.pb.dart';
+import 'package:brambl/brambl.dart';
+import 'package:topl_protobuf/brambl/models/box/lock.pb.dart';
 import 'package:topl_protobuf/brambl/models/transaction/io_transaction.pb.dart';
 import 'package:topl_protobuf/brambl/models/transaction/spent_transaction_output.pb.dart';
 
@@ -52,7 +53,9 @@ class TransactionSemanticValidation
       return ["UnspendableBox"];
     final spentOutput = spentTransaction.outputs[input.address.index];
     if (spentOutput.value != input.value) return ["InputDataMismatch"];
-    final expectedEvidence = Evidence_Sized32(); // TODO
+    // TODO: Other predicate types
+    final expectedEvidence =
+        Lock(predicate: input.attestation.predicate.lock).evidence32;
     if (spentOutput.address.lock32.evidence != expectedEvidence)
       return ["InputDataMismatch"];
     return [];

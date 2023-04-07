@@ -12,6 +12,17 @@ environment:
 
 dependencies:
   fpdart: ^0.3.0
+  grpc: ^3.1.0
+  logging:
+  fixnum:
+  bifrost_common:
+    path: ../common
+  bifrost_consensus:
+    path: ../consensus
+  bifrost_ledger:
+    path: ../ledger
+  brambl:
+    path: ../brambl
   topl_protobuf:
     path: ../../protobuf-specs/build/dart
 

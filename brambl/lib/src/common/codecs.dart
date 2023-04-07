@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:bifrost_common/utils.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:hashlib/hashlib.dart';
 import 'package:quivr/quivr.dart';
@@ -31,11 +32,11 @@ extension ImmutableBytesSyntax on ImmutableBytes {
 }
 
 extension Int32Immutable on Int32 {
-  ImmutableBytes get immutable => ImmutableBytes()..value = toBytes();
+  ImmutableBytes get immutable => ImmutableBytes()..value = this.toBigInt.bytes;
 }
 
 extension Int64Immutable on Int64 {
-  ImmutableBytes get immutable => ImmutableBytes()..value = toBytes();
+  ImmutableBytes get immutable => ImmutableBytes()..value = this.toBigInt.bytes;
 }
 
 extension ArrayByteImmutable on List<int> {
@@ -144,7 +145,7 @@ extension IoTransactionSignable on IoTransaction {
           ..datum = datum)
         .immutable;
 
-    final hash = await blake2b256.convert(immutable.value);
+    final hash = blake2b256.convert(immutable.value);
     return SignableBytes()..value = hash.bytes;
   }
 }
@@ -379,6 +380,13 @@ extension LockImmutable on Lock {
     else
       throw MatchError(this);
   }
+
+  Evidence_Sized32 get evidence32 => Evidence_Sized32(
+      digest:
+          Digest_Digest32(value: blake2b256.convert(immutable.value).bytes));
+
+  LockAddress address({int network = 0, int ledger = 0}) => LockAddress(
+      network: 0, ledger: 0, lock32: Identifier_Lock32(evidence: evidence32));
 }
 
 extension PredicateAttestationImmutable on Attestation_Predicate {

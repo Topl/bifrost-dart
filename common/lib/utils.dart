@@ -27,6 +27,10 @@ extension BigIntOps on BigInt {
   }
 }
 
+extension Int32Ops on Int32 {
+  BigInt get toBigInt => BigInt.from(this.toInt());
+}
+
 extension Int64Ops on Int64 {
   BigInt get toBigInt => BigInt.parse(toString());
 }

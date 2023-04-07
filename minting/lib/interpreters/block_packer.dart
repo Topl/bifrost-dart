@@ -1,7 +1,6 @@
 import 'dart:collection';
 
 import 'package:bifrost_common/models/common.dart';
-import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_ledger/algebras/body_authorization_validation_algebra.dart';
 import 'package:bifrost_ledger/algebras/body_semantic_validation_algebra.dart';
 import 'package:bifrost_ledger/algebras/body_syntax_validation_algebra.dart';

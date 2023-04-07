@@ -7,7 +7,6 @@ import 'package:bifrost_consensus/algebras/consensus_validation_state_algebra.da
 import 'package:bifrost_consensus/algebras/eta_calculation_algebra.dart';
 import 'package:bifrost_crypto/ed25519.dart' show ed25519;
 import 'package:bifrost_crypto/kes.dart';
-import 'package:bifrost_crypto/utils.dart';
 import 'package:bifrost_minting/algebras/operational_key_maker_algebra.dart';
 import 'package:bifrost_minting/algebras/secure_store_algebra.dart';
 import 'package:bifrost_minting/algebras/vrf_calculator_algebra.dart';

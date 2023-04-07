@@ -7,6 +7,7 @@ import 'package:bifrost_blockchain/validators.dart';
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/algebras/clock_algebra.dart';
 import 'package:bifrost_common/algebras/parent_child_tree_algebra.dart';
+import 'package:bifrost_common/interpreters/block_height_tree.dart';
 import 'package:bifrost_common/interpreters/clock.dart';
 import 'package:bifrost_common/interpreters/parent_child_tree.dart';
 import 'package:bifrost_consensus/algebras/consensus_validation_state_algebra.dart';
@@ -22,6 +23,7 @@ import 'package:bifrost_consensus/models/vrf_config.dart';
 import 'package:bifrost_consensus/utils.dart';
 import 'package:bifrost_crypto/kes.dart';
 import 'package:bifrost_crypto/utils.dart';
+import 'package:bifrost_grpc/interpreters/node_grpc.dart';
 import 'package:bifrost_ledger/interpreters/mempool.dart';
 import 'package:bifrost_ledger/interpreters/quivr_context.dart';
 import 'package:bifrost_ledger/models/body_validation_context.dart';
@@ -224,6 +226,26 @@ class Blockchain {
           BlockPacker.makeBodyValidator(validators.bodySyntax,
               validators.bodySemantic, validators.bodyAuthorization)),
     );
+
+    log.info("Preparing RPC Server");
+
+    final rpcServer = NodeGrpc(
+      dataStores.headers.get,
+      dataStores.bodies.get,
+      dataStores.transactions,
+      localChain,
+      mempool,
+      validators.transactionSyntax.validate,
+      BlockHeightTree(
+        dataStores.blockHeightTree,
+        await currentEventIdGetterSetters.blockHeightTree.get(),
+        dataStores.slotData,
+        parentChildTree,
+        currentEventIdGetterSetters.blockHeightTree.set,
+      ),
+    );
+
+    await rpcServer.serve(config.rpc.bindHost, config.rpc.bindPort);
 
     log.info("Blockchain Initialized");
 

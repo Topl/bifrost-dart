@@ -5,7 +5,10 @@ import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_crypto/utils.dart';
 import 'package:brambl/brambl.dart';
 import 'package:fixnum/fixnum.dart';
+import 'package:topl_protobuf/brambl/models/datum.pb.dart';
+import 'package:topl_protobuf/brambl/models/event.pb.dart';
 import 'package:topl_protobuf/brambl/models/transaction/io_transaction.pb.dart';
+import 'package:topl_protobuf/brambl/models/transaction/schedule.pb.dart';
 import 'package:topl_protobuf/brambl/models/transaction/unspent_transaction_output.pb.dart';
 import 'package:topl_protobuf/consensus/models/block_header.pb.dart';
 import 'package:topl_protobuf/consensus/models/block_id.pb.dart';
@@ -13,6 +16,7 @@ import 'package:topl_protobuf/consensus/models/eligibility_certificate.pb.dart';
 import 'package:topl_protobuf/consensus/models/operational_certificate.pb.dart';
 import 'package:topl_protobuf/consensus/models/staking_address.pb.dart';
 import 'package:topl_protobuf/node/models/block.pb.dart';
+import 'package:topl_protobuf/quivr/models/shared.pb.dart';
 
 class GenesisConfig {
   final Int64 timestamp;
@@ -24,7 +28,13 @@ class GenesisConfig {
   static final DefaultEtaPrefix = utf8.encode("genesis");
 
   Future<FullBlock> get block async {
-    final transaction = IoTransaction(outputs: outputs);
+    final transaction = IoTransaction(
+        inputs: [],
+        outputs: outputs,
+        datum: Datum_IoTransaction(
+            event: Event_IoTransaction(
+                schedule: Schedule(timestamp: timestamp),
+                metadata: SmallData())));
     final transactions = [transaction];
     final eta =
         await (etaPrefix + ((await transaction.id).evidence.digest.value))
