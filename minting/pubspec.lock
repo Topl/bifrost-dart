@@ -69,6 +69,13 @@ packages:
       relative: true
     source: path
     version: "1.0.0+1"
+  bifrost_ledger:
+    dependency: "direct main"
+    description:
+      path: "../ledger"
+      relative: true
+    source: path
+    version: "1.0.0+1"
   boolean_selector:
     dependency: transitive
     description:
@@ -77,6 +84,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.1"
+  brambl:
+    dependency: "direct main"
+    description:
+      path: "../brambl"
+      relative: true
+    source: path
+    version: "1.0.0+1"
   build:
     dependency: transitive
     description:
@@ -238,7 +252,7 @@ packages:
     source: hosted
     version: "6.1.4"
   fixnum:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: fixnum
       sha256: "25517a4deb0c03aa0f32fd12db525856438902d9c16536311e76cdc57b31d7d1"
@@ -482,6 +496,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.2"
+  quivr:
+    dependency: transitive
+    description:
+      path: "../quivr"
+      relative: true
+    source: path
+    version: "1.0.0+1"
   rational:
     dependency: "direct main"
     description:

@@ -22,6 +22,7 @@ import 'package:bifrost_consensus/models/vrf_config.dart';
 import 'package:bifrost_consensus/utils.dart';
 import 'package:bifrost_crypto/kes.dart';
 import 'package:bifrost_crypto/utils.dart';
+import 'package:bifrost_ledger/interpreters/mempool.dart';
 import 'package:bifrost_ledger/interpreters/quivr_context.dart';
 import 'package:bifrost_ledger/models/body_validation_context.dart';
 import 'package:bifrost_minting/algebras/block_producer_algebra.dart';
@@ -202,6 +203,10 @@ class Blockchain {
       leaderElection,
     );
 
+    log.info("Preparing mempool");
+    final mempool = Mempool(dataStores.bodies.getOrRaise, parentChildTree,
+        canonicalHeadId, Duration(minutes: 5));
+
     log.info("Preparing BlockProducer");
 
     final blockProducer = BlockProducer(
@@ -212,7 +217,12 @@ class Blockchain {
       ]),
       staker,
       clock,
-      BlockPacker(),
+      BlockPacker(
+          mempool,
+          dataStores.transactions.getOrRaise,
+          dataStores.transactions.contains,
+          BlockPacker.makeBodyValidator(validators.bodySyntax,
+              validators.bodySemantic, validators.bodyAuthorization)),
     );
 
     log.info("Blockchain Initialized");

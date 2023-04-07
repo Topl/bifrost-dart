@@ -110,10 +110,12 @@ class BlockProducer extends BlockProducerAlgebra {
       Int64 targetSlot, bool Function() isCanceled) async {
     FullBlockBody body = FullBlockBody();
     bool c = isCanceled();
+    final iterative = await blockPacker.improvePackedBlock(
+        parentSlotData.slotId.blockId, parentSlotData.height + 1, targetSlot);
     while (!c && clock.globalSlot <= targetSlot) {
-      final updated = await blockPacker.improvePackedBlock(body);
-      if (updated != null)
-        body = updated;
+      final newIteration = await iterative(body);
+      if (newIteration != null)
+        body = newIteration;
       else
         await Future.delayed(Duration(milliseconds: 50));
       c = isCanceled();
