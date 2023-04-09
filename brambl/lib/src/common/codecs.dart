@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:bifrost_common/utils.dart';
 import 'package:fixnum/fixnum.dart';
@@ -31,12 +32,17 @@ extension ImmutableBytesSyntax on ImmutableBytes {
       ImmutableBytes()..value = value + other.value;
 }
 
+extension BigIntImmutable on BigInt {
+  ImmutableBytes get immutable =>
+      ImmutableBytes()..value = Uint8List.fromList(this.bytes);
+}
+
 extension Int32Immutable on Int32 {
-  ImmutableBytes get immutable => ImmutableBytes()..value = this.toBigInt.bytes;
+  ImmutableBytes get immutable => this.toBigInt.immutable;
 }
 
 extension Int64Immutable on Int64 {
-  ImmutableBytes get immutable => ImmutableBytes()..value = this.toBigInt.bytes;
+  ImmutableBytes get immutable => this.toBigInt.immutable;
 }
 
 extension ArrayByteImmutable on List<int> {
@@ -48,16 +54,16 @@ extension StringImmutable on String {
 }
 
 extension ListImmutable<T> on List<T> {
-  // TODO: Does not align with BramblSc
-  ImmutableBytes immutable(ImmutableBytes Function(T) f) =>
-      ImmutableBytes()..value = map(f).expand((e) => e.value).toList();
-}
+  ImmutableBytes immutable(ImmutableBytes Function(T) f) {
+    final bytes = <int>[];
+    for (int i = 0; i < length; i++) {
+      bytes.addAll(Int32(i).immutable.value);
+      bytes.addAll(f(this[i]).value);
+    }
 
-// extension NullableImmutable<T> on T? {
-//   ImmutableBytes get immutable => this == null
-//       ? (ImmutableBytes()..value = [0])
-//       : (0x01.immutable + this!.immutable);
-// }
+    return ImmutableBytes(value: bytes);
+  }
+}
 
 extension Int128Immutable on Int128 {
   ImmutableBytes get immutable => value.immutable;

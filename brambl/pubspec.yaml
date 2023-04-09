@@ -13,7 +13,9 @@ environment:
 dependencies:
   hashlib:
   collection:
+  convert:
   fixnum:
+  fpdart:
   topl_protobuf:
     path: ../../protobuf-specs/build/dart
   quivr:
@@ -25,3 +27,4 @@ dependencies:
     path: ../common
 dev_dependencies:    
   build_runner: ^2.3.3
+  test:

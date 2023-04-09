@@ -7,7 +7,7 @@ import 'package:topl_protobuf/quivr/models/shared.pb.dart';
 // Source: https://github.com/dart-lang/sdk/issues/32803#issuecomment-1228291047
 extension BigIntOps on BigInt {
   Int8List get bytes {
-    final data = ByteData((bitLength / 8).ceil());
+    final data = ByteData(bitLength ~/ 8 + 1);
     var _bigInt = this;
 
     for (var i = data.lengthInBytes - 1; i >= 0; i--) {

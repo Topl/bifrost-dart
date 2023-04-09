@@ -8,6 +8,7 @@ import 'package:bifrost_common/algebras/clock_algebra.dart';
 import 'package:bifrost_minting/algebras/staking_algebra.dart';
 import 'package:async/async.dart';
 import 'package:bifrost_minting/models/vrf_hit.dart';
+import 'package:brambl/brambl.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:logging/logging.dart';
 import 'package:topl_protobuf/consensus/models/slot_data.pb.dart';
@@ -77,8 +78,10 @@ class BlockProducer extends BlockProducerAlgebra {
               ));
           if (maybeHeader != null) {
             final headerId = await maybeHeader.id;
+            final transactionIds =
+                await Future.wait(bodyOpt.transactions.map((tx) => tx.id));
             log.info(
-                "Produced block header id=${headerId.show} height=${maybeHeader.height} slot=${maybeHeader.slot} parentId=${maybeHeader.parentHeaderId.show}");
+                "Produced block id=${headerId.show} height=${maybeHeader.height} slot=${maybeHeader.slot} parentId=${maybeHeader.parentHeaderId.show} transactionIds=[${transactionIds.map((i) => i.show).join(",")}]");
             return FullBlock(header: maybeHeader, fullBody: bodyOpt);
           } else {
             log.warning("Failed to produce block at next slot=${nextHit.slot}");
