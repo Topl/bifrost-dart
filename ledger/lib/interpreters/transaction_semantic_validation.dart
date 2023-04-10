@@ -1,4 +1,5 @@
 import 'package:bifrost_common/models/common.dart';
+import 'package:bifrost_ledger/algebras/box_state_algebra.dart';
 import 'package:bifrost_ledger/algebras/transaction_semantic_validation_algebra.dart';
 import 'package:bifrost_ledger/interpreters/box_state.dart';
 import 'package:bifrost_ledger/models/transaction_validation_context.dart';
@@ -10,7 +11,7 @@ import 'package:topl_protobuf/brambl/models/transaction/spent_transaction_output
 class TransactionSemanticValidation
     extends TransactionSemanticValidationAlgebra {
   final Future<IoTransaction> Function(TransactionId) fetchTransaction;
-  final BoxState boxState;
+  final BoxStateAlgebra boxState;
 
   TransactionSemanticValidation(this.fetchTransaction, this.boxState);
 
@@ -35,7 +36,7 @@ class TransactionSemanticValidation
     return [];
   }
 
-  _scheduleValidation(
+  List<String> _scheduleValidation(
       IoTransaction transaction, TransactionValidationContext context) {
     final schedule = transaction.datum.event.schedule;
     final slot = context.slot;
@@ -45,7 +46,7 @@ class TransactionSemanticValidation
       return ["UnsatifiedSchedule"];
   }
 
-  _dataValidation(SpentTransactionOutput input,
+  Future<List<String>> _dataValidation(SpentTransactionOutput input,
       TransactionValidationContext context) async {
     final spentTransaction =
         await fetchTransaction(input.address.ioTransaction32);
@@ -61,7 +62,7 @@ class TransactionSemanticValidation
     return [];
   }
 
-  _spendableValidation(SpentTransactionOutput input,
+  Future<List<String>> _spendableValidation(SpentTransactionOutput input,
       TransactionValidationContext context) async {
     final boxExists =
         await boxState.boxExistsAt(context.parentHeaderId, input.address);

@@ -237,8 +237,8 @@ String? _evaluateTxBind(
     String tag, Proof proof, TxBind txBind, DynamicContext context) {
   final sb = context.signableBytes;
   final m = utf8.encode(tag) + sb;
-  final expected = Int8List.fromList(blake2b256.convert(m).bytes);
-  if (!_listEq(expected, txBind.value)) {
+  final expected = blake2b256.convert(m).bytes;
+  if (!_listEq(expected, Uint8List.fromList(txBind.value))) {
     return "MessageAuthorizationFailed";
   }
   return null;

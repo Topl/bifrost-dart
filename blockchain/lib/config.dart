@@ -72,7 +72,7 @@ class BlockchainConsensus {
             vrfBaselineDifficulty ?? Rational.fromInt(1, 20),
         vrfAmpltitude = vrfAmpltitude ?? Rational.fromInt(1, 2),
         chainSelectionKLookback = chainSelectionKLookback ?? Int64(50),
-        slotDuration = slotDuration ?? Duration(milliseconds: 200),
+        slotDuration = slotDuration ?? Duration(milliseconds: 1000),
         forwardBiastedSlotWindow = forwardBiastedSlotWindow ?? Int64(50),
         operationalPeriodsPerEpoch = operationalPeriodsPerEpoch ?? Int64(2),
         kesKeyHours = kesKeyHours ?? 9,

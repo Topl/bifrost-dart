@@ -8,7 +8,7 @@ import 'package:topl_protobuf/quivr/models/shared.pb.dart';
 
 _createTxBind(String tag, SignableBytes message) {
   final m = utf8.encode(tag) + message.value;
-  final h = Int8List.fromList(blake2b256.convert(m).bytes);
+  final h = blake2b256.convert(m).bytes;
   return TxBind()..value = h;
 }
 

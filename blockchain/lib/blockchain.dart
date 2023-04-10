@@ -182,7 +182,7 @@ class Blockchain {
 
     log.info("Preparing Validators");
 
-    final validators = Validators.make(
+    final validators = await Validators.make(
       dataStores,
       genesisBlockId,
       currentEventIdGetterSetters,
@@ -207,7 +207,7 @@ class Blockchain {
 
     log.info("Preparing mempool");
     final mempool = Mempool(dataStores.bodies.getOrRaise, parentChildTree,
-        canonicalHeadId, Duration(minutes: 5));
+        await currentEventIdGetterSetters.mempool.get(), Duration(minutes: 5));
 
     log.info("Preparing BlockProducer");
 

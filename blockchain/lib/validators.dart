@@ -29,7 +29,7 @@ class Validators {
   Validators(this.header, this.headerToBody, this.transactionSyntax,
       this.bodySyntax, this.bodySemantic, this.bodyAuthorization);
 
-  factory Validators.make(
+  static Future<Validators> make(
     DataStores dataStores,
     BlockId genesisBlockId,
     CurrentEventIdGetterSetters currentEventIdGetterSetters,
@@ -38,7 +38,7 @@ class Validators {
     ConsensusValidationStateAlgebra consensusValidationState,
     LeaderElectionValidationAlgebra leaderElectionValidation,
     ClockAlgebra clock,
-  ) {
+  ) async {
     final headerValidation = BlockHeaderValidation(
         genesisBlockId,
         etaCalculation,
@@ -50,12 +50,13 @@ class Validators {
     final headerToBodyValidation = BlockHeaderToBodyValidation();
 
     final boxState = BoxState.make(
-        dataStores.spendableBoxIds,
-        genesisBlockId,
-        dataStores.bodies.getOrRaise,
-        dataStores.transactions.getOrRaise,
-        parentChildTree,
-        currentEventIdGetterSetters.boxState.set);
+      dataStores.spendableBoxIds,
+      await currentEventIdGetterSetters.boxState.get(),
+      dataStores.bodies.getOrRaise,
+      dataStores.transactions.getOrRaise,
+      parentChildTree,
+      currentEventIdGetterSetters.boxState.set,
+    );
 
     final transactionSyntaxValidation = TransactionSyntaxInterpreter();
     final transactionSemanticValidation = TransactionSemanticValidation(

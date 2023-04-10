@@ -137,39 +137,72 @@ extension IoTransactionImmutable on IoTransaction {
 }
 
 extension IoTransactionSignable on IoTransaction {
-  Future<SignableBytes> get signableBytes async {
+  IoTransaction get withoutProofs {
     removeProofs(SpentTransactionOutput stxo) {
-      // TODO: Other attestation types
-      final attestation = stxo.attestation.hasPredicate()
-          ? (Attestation()
-            ..predicate =
-                Attestation_Predicate(lock: stxo.attestation.predicate.lock))
-          : stxo.attestation;
+      final attestation = stxo.attestation;
+      late Attestation newAttestation;
+      if (attestation.hasPredicate()) {
+        newAttestation = Attestation()
+          ..predicate = Attestation_Predicate(
+            lock: attestation.predicate.lock,
+            responses: [],
+          );
+      } else if (attestation.hasImage32()) {
+        newAttestation = Attestation()
+          ..image32 = Attestation_Image32(
+            lock: attestation.image32.lock,
+            responses: [],
+          );
+      } else if (attestation.hasImage64()) {
+        newAttestation = Attestation()
+          ..image64 = Attestation_Image64(
+            lock: attestation.image64.lock,
+            responses: [],
+          );
+      } else if (attestation.hasCommitment32()) {
+        newAttestation = Attestation()
+          ..commitment32 = Attestation_Commitment32(
+            lock: attestation.commitment32.lock,
+            responses: [],
+          );
+      } else if (attestation.hasCommitment64()) {
+        newAttestation = Attestation()
+          ..commitment64 = Attestation_Commitment64(
+            lock: attestation.commitment64.lock,
+            responses: [],
+          );
+      } else {
+        throw MatchError(attestation);
+      }
       return SpentTransactionOutput()
         ..address = stxo.address
-        ..attestation = attestation
+        ..attestation = newAttestation
         ..value = stxo.value;
     }
 
-    final immutable = (IoTransaction()
-          ..inputs.addAll(inputs.map(removeProofs))
-          ..outputs.addAll(outputs)
-          ..datum = datum)
-        .immutable;
+    return IoTransaction()
+      ..inputs.addAll(inputs.map(removeProofs))
+      ..outputs.addAll(outputs)
+      ..datum = datum;
+  }
 
-    final hash = blake2b256.convert(immutable.value);
-    return SignableBytes()..value = hash.bytes;
+  Future<SignableBytes> get signableBytes async {
+    final minusProofs = withoutProofs;
+    final immutable = minusProofs.immutable;
+
+    return SignableBytes()..value = immutable.value;
   }
 }
 
 extension IoTransactionIdentifiable on IoTransaction {
-  Future<Identifier_IoTransaction32> get id async {
+  Future<Evidence_Sized32> get evidence32 async {
     final signable = await signableBytes;
     final hashed = blake2b256.convert(signable.value);
-    return Identifier_IoTransaction32(
-        evidence:
-            Evidence_Sized32(digest: Digest_Digest32(value: hashed.bytes)));
+    return Evidence_Sized32(digest: Digest_Digest32(value: hashed.bytes));
   }
+
+  Future<Identifier_IoTransaction32> get id async =>
+      Identifier_IoTransaction32(evidence: await evidence32);
 }
 
 extension ScheduleImmutable on Schedule {
@@ -322,7 +355,7 @@ extension LvlValueImmutable on Value_LVL {
 }
 
 extension ToplValueImmutable on Value_TOPL {
-  ImmutableBytes get immutable => quantity.immutable;
+  ImmutableBytes get immutable => quantity.immutable + stakingAddress.immutable;
 }
 
 extension AssetValueImmutable on Value_Asset {
