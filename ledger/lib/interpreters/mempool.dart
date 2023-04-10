@@ -13,8 +13,10 @@ class Mempool extends MempoolAlgebra {
   final Future<BlockBody> Function(BlockId) fetchBlockBody;
   final EventSourcedStateAlgebra<Map<TransactionId, MempoolEntry>, BlockId>
       eventSourcedState;
+  final Future<void> Function(TransactionId transactionId) _add;
 
-  Mempool._(this._state, this.fetchBlockBody, this.eventSourcedState);
+  Mempool._(
+      this._state, this.fetchBlockBody, this.eventSourcedState, this._add);
 
   factory Mempool(
       Future<BlockBody> Function(BlockId) fetchBlockBody,
@@ -22,6 +24,8 @@ class Mempool extends MempoolAlgebra {
       BlockId currentEventId,
       Duration expirationDuration) {
     final state = <TransactionId, MempoolEntry>{};
+    final _add = (TransactionId transactionId) => state[transactionId] =
+        MempoolEntry(transactionId, DateTime.now().add(expirationDuration));
     final eventSourcedState =
         EventTreeState<Map<TransactionId, MempoolEntry>, BlockId>(
       (state, blockId) async {
@@ -32,8 +36,7 @@ class Mempool extends MempoolAlgebra {
       (state, blockId) async {
         final blockBody = await fetchBlockBody(blockId);
         for (final transactionId in blockBody.transactionIds) {
-          state[transactionId] = MempoolEntry(
-              transactionId, DateTime.now().add(expirationDuration));
+          _add(transactionId);
         }
         return state;
       },
@@ -48,13 +51,12 @@ class Mempool extends MempoolAlgebra {
       state.removeWhere((key, value) => value.addedAt.isBefore(now));
     });
 
-    return Mempool._(state, fetchBlockBody, eventSourcedState);
+    return Mempool._(
+        state, fetchBlockBody, eventSourcedState, (id) async => _add(id));
   }
 
   @override
-  Future<void> add(TransactionId transactionId) async {
-    _state[transactionId] = MempoolEntry(transactionId, DateTime.now());
-  }
+  Future<void> add(TransactionId transactionId) => _add(transactionId);
 
   @override
   Future<Set<TransactionId>> read(BlockId currentHead) => eventSourcedState

@@ -6,7 +6,6 @@ import 'package:bifrost_ledger/algebras/mempool_algebra.dart';
 import 'package:brambl/brambl.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:grpc/grpc.dart';
-import 'package:grpc/src/server/call.dart';
 import 'package:logging/logging.dart';
 import 'package:topl_protobuf/brambl/models/transaction/io_transaction.pb.dart';
 import 'package:topl_protobuf/consensus/models/block_header.pb.dart';

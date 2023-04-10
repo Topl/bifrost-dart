@@ -12,6 +12,7 @@ import 'package:bifrost_minting/algebras/block_packer_algebra.dart';
 import 'package:brambl/brambl.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:logging/logging.dart';
 import 'package:topl_protobuf/brambl/models/transaction/io_transaction.pb.dart';
 import 'package:topl_protobuf/consensus/models/block_id.pb.dart';
 import 'package:topl_protobuf/node/models/block.pb.dart';
@@ -21,6 +22,8 @@ class BlockPacker extends BlockPackerAlgebra {
   final Future<IoTransaction> Function(TransactionId) fetchTransaction;
   final Future<bool> Function(TransactionId) transactionExistsLocally;
   final Future<bool> Function(TransactionValidationContext) validateTransaction;
+
+  final log = Logger("BlockPacker");
 
   BlockPacker(this.mempool, this.fetchTransaction,
       this.transactionExistsLocally, this.validateTransaction);
@@ -35,14 +38,14 @@ class BlockPacker extends BlockPackerAlgebra {
     for (final transaction in unsortedTransactions) {
       final spentIds =
           transaction.inputs.map((i) => i.address.ioTransaction32).toSet();
-      bool hasDependencies = true;
+      bool dependenciesExistLocally = true;
       for (final id in spentIds) {
         if (!await transactionExistsLocally(id)) {
-          hasDependencies = false;
+          dependenciesExistLocally = false;
           break;
         }
       }
-      if (hasDependencies) transactionsWithLocalParents.add(transaction);
+      if (dependenciesExistLocally) transactionsWithLocalParents.add(transaction);
     }
     final sortedTransactions = transactionsWithLocalParents.sortBy(Order.by(
         (a) => a.datum.event.schedule.timestamp.toInt(),
@@ -74,23 +77,35 @@ class BlockPacker extends BlockPackerAlgebra {
       BodySyntaxValidationAlgebra bodySyntaxValidation,
       BodySemanticValidationAlgebra bodySemanticValidation,
       BodyAuthorizationValidationAlgebra bodyAuthorizationValidation) {
+    final log = Logger("BlockPacker.Validator");
     return (context) async {
       final proposedBody = BlockBody(
           transactionIds: await Future.wait(context.prefix.map((t) => t.id)));
       final errors = <String>[];
+
       errors.addAll(await bodySyntaxValidation.validate(proposedBody));
-      if (errors.isNotEmpty) return false;
+      if (errors.isNotEmpty) {
+        log.info("Rejecting block body due to syntax errors: $errors");
+        return false;
+      }
+
       final bodyValidationContext = BodyValidationContext(
           context.parentHeaderId, context.height, context.slot);
       errors.addAll(await bodySemanticValidation.validate(
           proposedBody, bodyValidationContext));
-      if (errors.isNotEmpty) return false;
+      if (errors.isNotEmpty) {
+        log.info("Rejecting block body due to semantic errors: $errors");
+        return false;
+      }
       final quivrContextBuilder = (IoTransaction tx) async =>
           QuivrContextForProposedBlock(
               context.height, context.slot, await tx.signableBytes);
       errors.addAll(await bodyAuthorizationValidation.validate(
           proposedBody, quivrContextBuilder));
-      if (errors.isNotEmpty) return false;
+      if (errors.isNotEmpty) {
+        log.info("Rejecting block body due to authorization errors: $errors");
+        return false;
+      }
       return true;
     };
   }

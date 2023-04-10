@@ -1,5 +1,5 @@
 import 'package:bifrost_common/utils.dart';
-import 'package:brambl/src/validation/algebras/transaction_syntax_verifier.dart';
+import 'package:brambl/brambl.dart';
 import 'package:collection/collection.dart';
 import 'package:topl_protobuf/brambl/models/transaction/io_transaction.pb.dart';
 import 'package:topl_protobuf/quivr/models/proof.pb.dart';
@@ -71,7 +71,10 @@ class TransactionSyntaxInterpreter extends TransactionSyntaxVerifier {
   }
 
   static List<String> dataLengthValidation(IoTransaction transaction) {
-    // TODO: Transaction immutable bytes
+    final immutableBytes = transaction.immutable;
+    if (immutableBytes.value.length > MaxDataLength) {
+      return ["ExcessiveDataLength"];
+    }
     return [];
   }
 

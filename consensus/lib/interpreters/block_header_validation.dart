@@ -90,7 +90,7 @@ class BlockHeaderValidation extends BlockHeadervalidationAlgebra {
     final expectedEta = await etaInterpreter.etaToBe(
         SlotId(slot: header.parentSlot, blockId: header.parentHeaderId),
         header.slot);
-    if (expectedEta != header.eligibilityCertificate.eta)
+    if (!expectedEta.sameElements(header.eligibilityCertificate.eta))
       return ["InvalidEligibilityCertificateEta"];
     final signatureVerification = await ed25519Vrf.verify(
       header.eligibilityCertificate.vrfSig,

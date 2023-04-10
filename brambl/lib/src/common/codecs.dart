@@ -74,8 +74,14 @@ extension SmallDataImmutable on SmallData {
 }
 
 extension RootImmutable on Root {
-  ImmutableBytes get immutable =>
-      hasRoot32() ? root32.immutable : root64.immutable;
+  ImmutableBytes get immutable {
+    if (hasRoot32())
+      return root32.immutable;
+    else if (hasRoot64())
+      return root64.immutable;
+    else
+      throw MatchError(this);
+  }
 }
 
 extension VerificationKeyImmutable on VerificationKey {
@@ -159,9 +165,10 @@ extension IoTransactionSignable on IoTransaction {
 extension IoTransactionIdentifiable on IoTransaction {
   Future<Identifier_IoTransaction32> get id async {
     final signable = await signableBytes;
+    final hashed = blake2b256.convert(signable.value);
     return Identifier_IoTransaction32(
         evidence:
-            Evidence_Sized32(digest: Digest_Digest32(value: signable.value)));
+            Evidence_Sized32(digest: Digest_Digest32(value: hashed.bytes)));
   }
 }
 
@@ -193,7 +200,7 @@ extension ValueImmutable on Value {
     else if (hasRegistration())
       return registration.immutable;
     else
-      return Int32.ZERO.immutable;
+      return [0x00].immutable;
   }
 }
 
@@ -362,13 +369,13 @@ extension Image64LockImmutable on Lock_Image64 {
 extension Commitment32LockImmutable on Lock_Commitment32 {
   ImmutableBytes get immutable =>
       Int32(threshold).immutable +
-      (hasRoot() ? [1].immutable + root.immutable : [0].immutable);
+      (hasRoot() ? ([1].immutable + root.immutable) : [0].immutable);
 }
 
 extension Commitment64LockImmutable on Lock_Commitment64 {
   ImmutableBytes get immutable =>
       Int32(threshold).immutable +
-      (hasRoot() ? [1].immutable + root.immutable : [0].immutable);
+      (hasRoot() ? ([1].immutable + root.immutable) : [0].immutable);
 }
 
 extension LockImmutable on Lock {

@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_crypto/utils.dart';
 import 'package:brambl/brambl.dart';
 import 'package:fixnum/fixnum.dart';

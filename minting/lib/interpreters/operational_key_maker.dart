@@ -27,7 +27,7 @@ class OperationalKeyMaker extends OperationalKeyMakerAlgebra {
   final EtaCalculationAlgebra etaCalculation;
   final ConsensusValidationStateAlgebra consensusValidationState;
   Int64? currentOperationalPeriod;
-  Map<Int64, OperationalKeyOut>? currentKeyCache;
+  Map<Int64, Future<OperationalKeyOut>>? currentKeyCache;
 
   final log = Logger("OperationalKeyMaker");
 
@@ -127,7 +127,7 @@ class OperationalKeyMaker extends OperationalKeyMakerAlgebra {
     return res;
   }
 
-  Future<Map<Int64, OperationalKeyOut>> _prepareOperationalPeriodKeys(
+  Future<Map<Int64, Future<OperationalKeyOut>>> _prepareOperationalPeriodKeys(
       SecretKeyKesProduct kesParent,
       Slot fromSlot,
       SlotId parentSlotId,
@@ -151,24 +151,18 @@ class OperationalKeyMaker extends OperationalKeyMakerAlgebra {
         .where((s) => !ineligibleSlots.contains(s))
         .toList();
     log.info("Preparing linear keys. count=${slots.length}");
-    final outs = await _prepareOperationalPeriodKeysImpl(kesParent, slots);
-    final mappedKeys =
-        Map.fromEntries(outs.map((out) => MapEntry(out.slot, out)));
-    return mappedKeys;
-  }
-}
 
-Future<List<OperationalKeyOut>> _prepareOperationalPeriodKeysImpl(
-    SecretKeyKesProduct kesParent, List<Slot> slots) async {
-  final parentVK = await kesProduct.generateVerificationKey(kesParent);
-  forSlot(Slot slot) async {
-    final childKeyPair = await ed25519.generateKeyPair();
-    final parentSignature = await kesProduct.sign(
-      kesParent,
-      childKeyPair.vk + slot.immutableBytes,
-    );
-    return OperationalKeyOut(slot, childKeyPair, parentSignature, parentVK);
-  }
+    final parentVK = await kesProduct.generateVerificationKey(kesParent);
 
-  return Future.wait(slots.map(forSlot));
+    forSlot(Slot slot) async {
+      final childKeyPair = await ed25519.generateKeyPair();
+      final parentSignature = await kesProduct.sign(
+        kesParent,
+        childKeyPair.vk + slot.immutableBytes,
+      );
+      return OperationalKeyOut(slot, childKeyPair, parentSignature, parentVK);
+    }
+
+    return Map.fromEntries(slots.map((slot) => MapEntry(slot, forSlot(slot))));
+  }
 }
