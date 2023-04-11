@@ -35,16 +35,6 @@ class NodeGrpc extends NodeRpcServiceBase {
     this.blockHeights,
   );
 
-  Future<void> serve(String bindHost, int bindPort) async {
-    final server = Server(
-      [this],
-      [],
-      CodecRegistry(codecs: const [GzipCodec(), IdentityCodec()]),
-    );
-    await server.serve(address: bindHost, port: bindPort);
-    log.info("RPC Server running at $bindHost:$bindPort");
-  }
-
   @override
   Future<BroadcastTransactionRes> broadcastTransaction(
       ServiceCall call, BroadcastTransactionReq request) async {
