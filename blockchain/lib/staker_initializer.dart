@@ -61,7 +61,7 @@ class StakerInitializer {
             revealed: Proposition(
               digitalSignature: Proposition_DigitalSignature(
                 routine: "ed25519",
-                verificationKey: VerificationKey(value: spendingKeyPair.vk),
+                verificationKey: VerificationKey(ed25519: VerificationKey_Ed25519Vk(value: spendingKeyPair.vk)),
               ),
             ),
           )

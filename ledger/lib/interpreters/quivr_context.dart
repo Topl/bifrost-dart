@@ -107,7 +107,7 @@ Future<String?> _ed25519Verifier(SignatureVerification verification) async {
   final actual = await ed25519.verify(
     verification.signature.value,
     verification.message.value,
-    verification.verificationKey.value,
+    verification.verificationKey.ed25519.value,
   );
   if (!actual) {
     return "SignatureVerificationFailure";

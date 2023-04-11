@@ -85,7 +85,13 @@ extension RootImmutable on Root {
 }
 
 extension VerificationKeyImmutable on VerificationKey {
-  ImmutableBytes get immutable => value.immutable;
+  ImmutableBytes get immutable {
+    if (hasEd25519())
+      return ed25519.value.immutable;
+    // TODO: ExtendedEd25519
+    else
+      throw MatchError(this);
+  }
 }
 
 extension WitnessImmutable on Witness {
