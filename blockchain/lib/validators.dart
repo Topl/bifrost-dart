@@ -10,6 +10,7 @@ import 'package:bifrost_consensus/interpreters/block_header_validation.dart';
 import 'package:bifrost_ledger/algebras/body_syntax_validation_algebra.dart';
 import 'package:bifrost_ledger/algebras/body_semantic_validation_algebra.dart';
 import 'package:bifrost_ledger/algebras/body_authorization_validation_algebra.dart';
+import 'package:bifrost_ledger/algebras/box_state_algebra.dart';
 import 'package:bifrost_ledger/interpreters/body_authorization_validation.dart';
 import 'package:bifrost_ledger/interpreters/body_semantic_validation.dart';
 import 'package:bifrost_ledger/interpreters/body_syntax_validation.dart';
@@ -25,9 +26,17 @@ class Validators {
   final BodySyntaxValidationAlgebra bodySyntax;
   final BodySemanticValidationAlgebra bodySemantic;
   final BodyAuthorizationValidationAlgebra bodyAuthorization;
+  final BoxStateAlgebra boxState;
 
-  Validators(this.header, this.headerToBody, this.transactionSyntax,
-      this.bodySyntax, this.bodySemantic, this.bodyAuthorization);
+  Validators(
+    this.header,
+    this.headerToBody,
+    this.transactionSyntax,
+    this.bodySyntax,
+    this.bodySemantic,
+    this.bodyAuthorization,
+    this.boxState,
+  );
 
   static Future<Validators> make(
     DataStores dataStores,
@@ -71,11 +80,13 @@ class Validators {
         dataStores.transactions.getOrRaise, transactionAuthorizationValidation);
 
     return Validators(
-        headerValidation,
-        headerToBodyValidation,
-        transactionSyntaxValidation,
-        bodySyntaxValidation,
-        bodySemanticValidation,
-        bodyAuthorizationValidation);
+      headerValidation,
+      headerToBodyValidation,
+      transactionSyntaxValidation,
+      bodySyntaxValidation,
+      bodySemanticValidation,
+      bodyAuthorizationValidation,
+      boxState,
+    );
   }
 }

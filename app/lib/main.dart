@@ -15,6 +15,7 @@ import 'package:bifrost_crypto/ed25519.dart' as ed25519;
 import 'package:bifrost_crypto/ed25519vrf.dart' as ed25519VRF;
 import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:topl_protobuf/node/models/block.pb.dart';
 
 var _isolate = LocalCompute;
 
@@ -103,36 +104,39 @@ class _BlockchainPageState extends State<BlockchainPage> {
       body: Center(
         child: StreamBuilder(
           stream: _accumulateBlocksStream(blockchain),
-          builder: (context, snapshot) => _headersView(snapshot.data ?? []),
+          builder: (context, snapshot) => _blocksView(snapshot.data ?? []),
         ),
       ),
     );
   }
 
-  Stream<List<BlockHeader>> _accumulateBlocksStream(Blockchain blockchain) =>
+  Stream<List<Block>> _accumulateBlocksStream(Blockchain blockchain) =>
       StreamGroup.merge([
         Stream.fromFuture(blockchain.localChain.currentHead),
         blockchain.localChain.adoptions
-      ])
-          .asyncMap(blockchain.dataStores.headers.getOrRaise)
-          .transform(StreamTransformer.fromBind((inStream) {
-        final List<BlockHeader> state = [];
+      ]).asyncMap((id) async {
+        final header = await blockchain.dataStores.headers.getOrRaise(id);
+        final body = await blockchain.dataStores.bodies.getOrRaise(id);
+        return Block(header: header, body: body);
+      }).transform(StreamTransformer.fromBind((inStream) {
+        final List<Block> state = [];
         return inStream.map((block) {
           state.insert(0, block);
           return List.of(state);
         });
       }));
 
-  ListView _headersView(List<BlockHeader> headers) => ListView.separated(
-        itemCount: headers.length,
+  ListView _blocksView(List<Block> blocks) => ListView.separated(
+        itemCount: blocks.length,
         itemBuilder: (context, index) => Column(
           children: [
             FutureBuilder(
-                future: headers[index].id,
+                future: blocks[index].header.id,
                 builder: (context, snapshot) =>
                     Text(snapshot.data?.show ?? "")),
-            Text("Height: ${headers[index].height}"),
-            Text("Slot: ${headers[index].slot}"),
+            Text("Height: ${blocks[index].header.height}"),
+            Text("Slot: ${blocks[index].header.slot}"),
+            Text("Transactions: ${blocks[index].body.transactionIds.length}"),
           ],
         ),
         separatorBuilder: (BuildContext context, int index) => const Divider(),

@@ -42,8 +42,8 @@ class QuivrContextForConstructedBlock extends DynamicContext {
   }
 
   @override
-  Int8List get signableBytes =>
-      Int8List.fromList(transactionSignableBytes.value);
+  Uint8List get signableBytes =>
+      Uint8List.fromList(transactionSignableBytes.value);
 
   @override
   SignatureVerifier? signatureVerifiers(String key) {
@@ -83,8 +83,8 @@ class QuivrContextForProposedBlock extends DynamicContext {
   Data? interfaces(String key) => null; // TODO
 
   @override
-  Int8List get signableBytes =>
-      Int8List.fromList(_transactionSignableBytes.value);
+  Uint8List get signableBytes =>
+      Uint8List.fromList(_transactionSignableBytes.value);
 
   @override
   SignatureVerifier? signatureVerifiers(String key) {
