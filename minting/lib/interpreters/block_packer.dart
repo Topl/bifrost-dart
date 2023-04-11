@@ -4,7 +4,6 @@ import 'package:bifrost_common/models/common.dart';
 import 'package:bifrost_ledger/algebras/body_authorization_validation_algebra.dart';
 import 'package:bifrost_ledger/algebras/body_semantic_validation_algebra.dart';
 import 'package:bifrost_ledger/algebras/body_syntax_validation_algebra.dart';
-import 'package:bifrost_ledger/algebras/box_state_algebra.dart';
 import 'package:bifrost_ledger/algebras/mempool_algebra.dart';
 import 'package:bifrost_ledger/interpreters/quivr_context.dart';
 import 'package:bifrost_ledger/models/body_validation_context.dart';
@@ -21,30 +20,31 @@ import 'package:topl_protobuf/node/models/block.pb.dart';
 class BlockPacker extends BlockPackerAlgebra {
   final MempoolAlgebra mempool;
   final Future<IoTransaction> Function(TransactionId) fetchTransaction;
-  final BoxStateAlgebra boxState;
+  final Future<bool> Function(TransactionId) transactionExistsLocally;
   final Future<bool> Function(TransactionValidationContext) validateTransaction;
 
   final log = Logger("BlockPacker");
 
-  BlockPacker(this.mempool, this.fetchTransaction, this.boxState,
-      this.validateTransaction);
+  BlockPacker(this.mempool, this.fetchTransaction,
+      this.transactionExistsLocally, this.validateTransaction);
 
   @override
   Future<Iterative<FullBlockBody>> improvePackedBlock(
       BlockId parentBlockId, Int64 height, Int64 slot) async {
     final queue = Queue<IoTransaction>();
 
-    populateQueue(Iterable<IoTransaction> exclude) async {
+    populateQueue(FullBlockBody current) async {
       final mempoolTransactionIds = await mempool.read(parentBlockId);
       final unsortedTransactions =
           (await Future.wait(mempoolTransactionIds.map(fetchTransaction)))
-              .where((tx) => !exclude.contains(tx));
+              .where((tx) => !current.transactions.contains(tx));
       final transactionsWithLocalParents = <IoTransaction>[];
       for (final transaction in unsortedTransactions) {
-        final spentIds = transaction.inputs.map((i) => i.address).toSet();
+        final spentIds =
+            transaction.inputs.map((i) => i.address.ioTransaction32).toSet();
         bool dependenciesExistLocally = true;
         for (final id in spentIds) {
-          if (!await boxState.boxExistsAt(parentBlockId, id)) {
+          if (!await transactionExistsLocally(id)) {
             dependenciesExistLocally = false;
             break;
           }
@@ -60,7 +60,7 @@ class BlockPacker extends BlockPackerAlgebra {
     }
 
     Future<FullBlockBody?> improve(FullBlockBody current) async {
-      if (queue.isEmpty) await populateQueue(current.transactions);
+      if (queue.isEmpty) await populateQueue(current);
       if (queue.isEmpty) return null;
       final transaction = queue.removeFirst();
       final fullBody = FullBlockBody()
@@ -69,12 +69,9 @@ class BlockPacker extends BlockPackerAlgebra {
       final context = TransactionValidationContext(
           parentBlockId, fullBody.transactions, height, slot);
       final validationResult = await validateTransaction(context);
-      if (validationResult)
-        return fullBody;
-      else {
-        if (!queue.isEmpty) queue.add(transaction);
-        return improve(current);
-      }
+      if (validationResult) return fullBody;
+      if (!queue.isEmpty) return improve(current);
+      return null;
     }
 
     return improve;

@@ -10,7 +10,6 @@ import 'package:bifrost_crypto/kes.dart' as kes;
 import 'package:bifrost_crypto/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
-import 'package:topl_protobuf/consensus/models/block_header.pb.dart';
 import 'package:bifrost_crypto/ed25519.dart' as ed25519;
 import 'package:bifrost_crypto/ed25519vrf.dart' as ed25519VRF;
 import 'package:flutter_background/flutter_background.dart';
@@ -91,21 +90,17 @@ class _BlockchainPageState extends State<BlockchainPage> {
 
   @override
   Widget build(BuildContext context) =>
-      (blockchain != null) ? ready(blockchain!) : loading;
+      Scaffold(body: (blockchain != null) ? ready(blockchain!) : loading);
 
-  Widget get loading => const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
+  Widget get loading => const Center(
+        child: CircularProgressIndicator(color: Colors.white),
       );
 
   Widget ready(Blockchain blockchain) {
-    return Scaffold(
-      body: Center(
-        child: StreamBuilder(
-          stream: _accumulateBlocksStream(blockchain),
-          builder: (context, snapshot) => _blocksView(snapshot.data ?? []),
-        ),
+    return Center(
+      child: StreamBuilder(
+        stream: _accumulateBlocksStream(blockchain),
+        builder: (context, snapshot) => _blocksView(snapshot.data ?? []),
       ),
     );
   }
@@ -126,20 +121,33 @@ class _BlockchainPageState extends State<BlockchainPage> {
         });
       }));
 
-  ListView _blocksView(List<Block> blocks) => ListView.separated(
-        itemCount: blocks.length,
-        itemBuilder: (context, index) => Column(
-          children: [
-            FutureBuilder(
-                future: blocks[index].header.id,
-                builder: (context, snapshot) =>
-                    Text(snapshot.data?.show ?? "")),
-            Text("Height: ${blocks[index].header.height}"),
-            Text("Slot: ${blocks[index].header.slot}"),
-            Text("Transactions: ${blocks[index].body.transactionIds.length}"),
-          ],
+  Widget _blocksView(List<Block> blocks) => SizedBox(
+        width: 500,
+        child: ListView.separated(
+          itemCount: blocks.length,
+          itemBuilder: (context, index) => Card(
+            color: const Color.fromARGB(210, 255, 255, 255),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FutureBuilder(
+                      future: blocks[index].header.id,
+                      builder: (context, snapshot) =>
+                          Text(snapshot.data?.show ?? "")),
+                  Text("Height: ${blocks[index].header.height}"),
+                  Text("Slot: ${blocks[index].header.slot}"),
+                  Text(
+                      "Transactions: ${blocks[index].body.transactionIds.length}"),
+                ],
+              ),
+            ),
+          ),
+          separatorBuilder: (BuildContext context, int index) =>
+              const Divider(),
         ),
-        separatorBuilder: (BuildContext context, int index) => const Divider(),
       );
 }
 

@@ -222,7 +222,7 @@ class Blockchain {
       BlockPacker(
           mempool,
           dataStores.transactions.getOrRaise,
-          validators.boxState,
+          dataStores.transactions.contains,
           BlockPacker.makeBodyValidator(validators.bodySyntax,
               validators.bodySemantic, validators.bodyAuthorization)),
     );
