@@ -56,7 +56,7 @@ class BoxStore<Key, Value, BoxRepr> extends StoreAlgebra<Key, Value> {
   }
 }
 
-class HeaderStore extends StoreAlgebra<BlockId, BlockHeader> {
+class HeaderStore {
   final Store objectBoxStore;
 
   HeaderStore(this.objectBoxStore);
@@ -123,81 +123,6 @@ class HeaderStore extends StoreAlgebra<BlockId, BlockHeader> {
           header.hasMetadata() ? Uint8List.fromList(header.metadata) : null,
       address: address,
     );
-  }
-
-  @override
-  Future<BlockHeader?> get(BlockId id) async {
-    final idBase58 = id.value.base58;
-
-    final query =
-        box.query(ObjectBoxBlockHeader_.idBase58.equals(idBase58)).build();
-
-    final resultOpt = await query.findFirstAsync();
-    query.close();
-    if (resultOpt != null) {
-      final ObjectBoxBlockHeader result = resultOpt;
-      return BlockHeader(
-        parentHeaderId:
-            BlockId(value: Base58Decode(result.parentHeaderIdBase58)),
-        parentSlot: Int64(result.parentSlot),
-        txRoot: result.txRoot,
-        bloomFilter: result.bloomFilter,
-        timestamp: Int64(result.timestamp),
-        height: Int64(result.height),
-        slot: Int64(result.slot),
-        eligibilityCertificate:
-            EligibilityCertificate.fromBuffer(result.eligibilityCertificate),
-        operationalCertificate:
-            OperationalCertificate.fromBuffer(result.operationalCertificate),
-        metadata: result.metadata,
-        address: StakingAddress(value: Base58Decode(result.address)),
-      );
-    } else
-      return null;
-  }
-
-  @override
-  Future<void> put(BlockId id, BlockHeader header) async {
-    final idBase58 = id.value.base58;
-    final parentHeaderIdBase58 = header.parentHeaderId.value.base58;
-    final address = header.address.value.base58;
-    final newHeader = ObjectBoxBlockHeader(
-      idBase58: idBase58,
-      parentHeaderIdBase58: parentHeaderIdBase58,
-      parentSlot: header.parentSlot.toInt(),
-      txRoot: Uint8List.fromList(header.txRoot),
-      bloomFilter: Uint8List.fromList(header.bloomFilter),
-      timestamp: header.timestamp.toInt(),
-      height: header.height.toInt(),
-      slot: header.slot.toInt(),
-      eligibilityCertificate: header.eligibilityCertificate.writeToBuffer(),
-      operationalCertificate: header.operationalCertificate.writeToBuffer(),
-      metadata:
-          header.hasMetadata() ? Uint8List.fromList(header.metadata) : null,
-      address: address,
-    );
-    await box.putAsync(newHeader);
-  }
-
-  @override
-  Future<bool> contains(BlockId id) async {
-    final idBase58 = id.value.base58;
-    final query =
-        box.query(ObjectBoxBlockHeader_.idBase58.equals(idBase58)).build();
-
-    final resultsCount = query.count();
-    query.close();
-    return resultsCount > 0;
-  }
-
-  @override
-  Future<void> remove(BlockId id) async {
-    final idBase58 = id.value.base58;
-    final query =
-        box.query(ObjectBoxBlockHeader_.idBase58.equals(idBase58)).build();
-    final ids = await query.findIdsAsync();
-    query.close();
-    await box.removeManyAsync(ids);
   }
 }
 

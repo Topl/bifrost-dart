@@ -85,8 +85,8 @@ final _algorithm = c.Ed25519();
 Future<Ed25519KeyPair> _convertAlgKeypair(c.SimpleKeyPair algKeypair) async {
   final sk = await algKeypair.extractPrivateKeyBytes();
   final vk = await algKeypair.extractPublicKey();
-  final int8Vk = Uint8List.fromList(vk.bytes).int8List;
-  return Ed25519KeyPair(Int8List.fromList(sk), int8Vk);
+  final uint8Vk = Uint8List.fromList(vk.bytes);
+  return Ed25519KeyPair(Uint8List.fromList(sk), uint8Vk);
 }
 
 Future<Ed25519KeyPair> _generateKeyPair() async {
@@ -100,7 +100,7 @@ Future<Ed25519KeyPair> _generateKeyPairFromSeed(List<int> seed) async {
 Future<List<int>> _sign(List<int> message, List<int> sk) async {
   final vk = await _getVerificationKey(sk);
   final uintRes = await _signKeyPair(message, Ed25519KeyPair(sk, vk));
-  return Uint8List.fromList(uintRes).int8List;
+  return Uint8List.fromList(uintRes);
 }
 
 Future<List<int>> _signKeyPair(
@@ -139,5 +139,5 @@ Future<List<int>> _getVerificationKey(List<int> sk) async {
   ec.pruneScalar(h, 0, s);
   final vk = Int8List(32);
   ec.scalarMultBaseEncoded(s, vk, 0);
-  return vk;
+  return Uint8List.fromList(vk);
 }

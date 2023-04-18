@@ -247,15 +247,15 @@ void main() {
 
 class TestTreeArg {
   final bool leftRight;
-  final Int8List seed;
-  final Int8List witnessLeft;
-  final Int8List witnessRight;
+  final Uint8List seed;
+  final Uint8List witnessLeft;
+  final Uint8List witnessRight;
 
   TestTreeArg(this.leftRight, this.seed, this.witnessLeft, this.witnessRight);
 }
 
 KesBinaryTree _buildTestTree(
-    Int8List sk, Int8List vk, Iterable<TestTreeArg> args) {
+    Uint8List sk, Uint8List vk, Iterable<TestTreeArg> args) {
   if (args.isEmpty) return KesSigningLeaf(sk, vk);
   final arg0 = args.first;
   if (arg0.leftRight)

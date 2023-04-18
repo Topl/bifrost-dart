@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/algebras/clock_algebra.dart';
@@ -102,7 +103,7 @@ class OperationalKeyMaker extends OperationalKeyMakerAlgebra {
     final diskKeyBytes = await secureStore.consume(fileName);
     if (diskKeyBytes == null) return null;
     final SecretKeyKesProduct diskKey =
-        SecretKeyKesProduct.decode(diskKeyBytes);
+        SecretKeyKesProduct.decode(Uint8List.fromList(diskKeyBytes));
     final latest = await kesProduct.getCurrentStep(diskKey);
     SecretKeyKesProduct? currentPeriodKey;
     if (latest == timeStep)

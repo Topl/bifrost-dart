@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:math';
 import 'dart:typed_data';
 
@@ -11,13 +12,13 @@ import 'kes_sum.dart';
 
 class KesHelper {
   const KesHelper();
-  Future<List<int>> hash(List<int> input) async {
-    return blake2b256.convert(input).bytes.int8List;
+  Future<Uint8List> hash(List<int> input) async {
+    return blake2b256.convert(input).bytes;
   }
 
   int exp(int n) => Int64(pow(2, n).toInt()).toInt32().toInt();
 
-  Future<Tuple2<List<int>, List<int>>> prng(List<int> seed) async {
+  Future<Tuple2<Uint8List, Uint8List>> prng(List<int> seed) async {
     final r1 = await hash([0x00]..addAll(seed));
     final r2 = await hash([0x01]..addAll(seed));
     return Tuple2(r1, r2);
@@ -36,14 +37,13 @@ class KesHelper {
     return loop(tree) - 1;
   }
 
-  Future<List<int>> witness(KesBinaryTree tree) async {
+  Future<Uint8List> witness(KesBinaryTree tree) async {
     if (tree is KesMerkleNode)
-      return hash(Int8List.fromList(tree.witnessLeft) +
-          Int8List.fromList(tree.witnessRight));
+      return hash(tree.witnessLeft + tree.witnessRight);
     else if (tree is KesSigningLeaf)
       return hash(tree.vk);
     else
-      return Int8List(32);
+      return Uint8List(32);
   }
 
   overwriteBytes(List<int> bytes) {

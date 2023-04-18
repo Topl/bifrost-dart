@@ -28,7 +28,7 @@ class GenusFullBlockGrpc extends GenusFullBlockServiceBase {
     final head = (await _fetchHeader(headId))!;
     if (request.depth.value >= head.height) return BlockResponse();
     final targetId = await blockHeights.useStateAt(
-        headId, (f) => f(head.height - request.depth));
+        headId, (f) => f(head.height - request.depth.value));
     if (targetId == null) return BlockResponse();
     return _blockById(targetId);
   }

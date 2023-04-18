@@ -160,7 +160,7 @@ class KesProductImpl extends KesProduct {
       }
     } else if (tree is KesSigningLeaf) {
       kesHelper.overwriteBytes(tree.sk);
-      return KesSigningLeaf(Int8List(32), tree.vk);
+      return KesSigningLeaf(Uint8List(32), tree.vk);
     }
     throw Exception("Evolving Key Configuration Error");
   }
@@ -225,7 +225,7 @@ class SecretKeyKesProduct {
     return false;
   }
 
-  factory SecretKeyKesProduct.decode(List<int> bytes) {
+  factory SecretKeyKesProduct.decode(Uint8List bytes) {
     final superTreeRes = _decodeTree(bytes);
     final subTreeRes = _decodeTree(superTreeRes.second);
     final nextSubSeed = subTreeRes.second.sublist(0, 32);
@@ -281,7 +281,7 @@ class SecretKeyKesProduct {
     ];
   }
 
-  static Tuple2<KesBinaryTree, List<int>> _decodeTree(List<int> bytes) {
+  static Tuple2<KesBinaryTree, Uint8List> _decodeTree(Uint8List bytes) {
     int cursor = 1;
     if (bytes[0] == 0x00) {
       final seed = bytes.sublist(cursor, cursor += 32);

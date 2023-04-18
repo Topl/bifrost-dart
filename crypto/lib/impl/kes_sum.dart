@@ -12,7 +12,7 @@ import 'package:topl_protobuf/consensus/models/operational_certificate.pb.dart';
 class KesSum {
   const KesSum();
   Future<KeyPairKesSum> createKeyPair(
-      List<int> seed, int height, Int64 offset) async {
+      Uint8List seed, int height, Int64 offset) async {
     final tree = await generateSecretKey(seed, height);
     final vk = await generateVerificationKey(tree);
     return KeyPairKesSum(
@@ -29,13 +29,14 @@ class KesSum {
           return loop(keyTree.left, [List.of(keyTree.witnessRight)]..addAll(W));
       } else if (keyTree is KesSigningLeaf) {
         return SignatureKesSum(
-            verificationKey: Int8List.fromList(keyTree.vk),
-            signature: await ed25519.sign(message, keyTree.sk),
-            witness: W);
+            verificationKey: Uint8List.fromList(keyTree.vk),
+            signature:
+                Uint8List.fromList(await ed25519.sign(message, keyTree.sk)),
+            witness: W.map(Uint8List.fromList));
       } else {
         return SignatureKesSum(
-            verificationKey: Int8List(32),
-            signature: Int8List(64),
+            verificationKey: Uint8List(32),
+            signature: Uint8List(64),
             witness: [[]]);
       }
     }
@@ -123,11 +124,12 @@ class KesSum {
     return 0;
   }
 
-  Future<KesBinaryTree> generateSecretKey(List<int> seed, int height) async {
-    Future<KesBinaryTree> seedTree(List<int> seed, int height) async {
+  Future<KesBinaryTree> generateSecretKey(Uint8List seed, int height) async {
+    Future<KesBinaryTree> seedTree(Uint8List seed, int height) async {
       if (height == 0) {
         final keyPair = await ed25519.generateKeyPairFromSeed(seed);
-        return KesSigningLeaf(List.from(keyPair.sk), List.from(keyPair.vk));
+        return KesSigningLeaf(
+            Uint8List.fromList(keyPair.sk), Uint8List.fromList(keyPair.vk));
       } else {
         final r = await kesHelper.prng(seed);
         final left = await seedTree(r.first, height - 1);
@@ -161,7 +163,7 @@ class KesSum {
       return VerificationKeyKesSum(
           value: await kesHelper.witness(tree), step: 0);
     } else {
-      return VerificationKeyKesSum(value: Int8List(32), step: 0);
+      return VerificationKeyKesSum(value: Uint8List(32), step: 0);
     }
   }
 
@@ -186,18 +188,19 @@ class KesSum {
         if (input.left is KesSigningLeaf && input.right is KesEmpty) {
           final keyPair = await ed25519.generateKeyPairFromSeed(input.seed);
           final newNode = KesMerkleNode(
-              Int8List(input.seed.length),
+              Uint8List(input.seed.length),
               input.witnessLeft,
               input.witnessRight,
               KesEmpty(),
-              KesSigningLeaf(List.of(keyPair.sk), List.of(keyPair.vk)));
+              KesSigningLeaf(Uint8List.fromList(keyPair.sk),
+                  Uint8List.fromList(keyPair.vk)));
           eraseOldNode(input.left);
           kesHelper.overwriteBytes(input.seed);
           return newNode;
         }
         if (input.left is KesMerkleNode && input.right is KesEmpty) {
           final newNode = KesMerkleNode(
-            Int8List(input.seed.length),
+            Uint8List(input.seed.length),
             input.witnessLeft,
             input.witnessRight,
             KesEmpty(),
@@ -243,9 +246,9 @@ const kesSum = KesSum();
 abstract class KesBinaryTree {}
 
 class KesMerkleNode extends KesBinaryTree {
-  final List<int> seed;
-  final List<int> witnessLeft;
-  final List<int> witnessRight;
+  final Uint8List seed;
+  final Uint8List witnessLeft;
+  final Uint8List witnessRight;
   final KesBinaryTree left;
   final KesBinaryTree right;
 
@@ -269,8 +272,8 @@ class KesMerkleNode extends KesBinaryTree {
 }
 
 class KesSigningLeaf extends KesBinaryTree {
-  final List<int> sk;
-  final List<int> vk;
+  final Uint8List sk;
+  final Uint8List vk;
 
   KesSigningLeaf(this.sk, this.vk);
 

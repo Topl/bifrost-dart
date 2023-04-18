@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:async/async.dart';
@@ -105,23 +106,29 @@ class _BlockchainPageState extends State<BlockchainPage> {
     );
   }
 
-  Stream<List<Block>> _accumulateBlocksStream(Blockchain blockchain) =>
+  Stream<List<FullBlock>> _accumulateBlocksStream(Blockchain blockchain) =>
       StreamGroup.merge([
         Stream.fromFuture(blockchain.localChain.currentHead),
         blockchain.localChain.adoptions
       ]).asyncMap((id) async {
         final header = await blockchain.dataStores.headers.getOrRaise(id);
         final body = await blockchain.dataStores.bodies.getOrRaise(id);
-        return Block(header: header, body: body);
+        final transactions = await Future.wait(body.transactionIds
+            .map(blockchain.dataStores.transactions.getOrRaise));
+        final fullBlock = FullBlock(
+            header: header,
+            fullBody: FullBlockBody(transactions: transactions));
+        print(json.encode(fullBlock.toProto3Json()));
+        return fullBlock;
       }).transform(StreamTransformer.fromBind((inStream) {
-        final List<Block> state = [];
+        final List<FullBlock> state = [];
         return inStream.map((block) {
           state.insert(0, block);
           return List.of(state);
         });
       }));
 
-  Widget _blocksView(List<Block> blocks) => SizedBox(
+  Widget _blocksView(List<FullBlock> blocks) => SizedBox(
         width: 500,
         child: ListView.separated(
           itemCount: blocks.length,
@@ -139,8 +146,9 @@ class _BlockchainPageState extends State<BlockchainPage> {
                           Text(snapshot.data?.show ?? "")),
                   Text("Height: ${blocks[index].header.height}"),
                   Text("Slot: ${blocks[index].header.slot}"),
+                  Text("Timestamp: ${blocks[index].header.timestamp}"),
                   Text(
-                      "Transactions: ${blocks[index].body.transactionIds.length}"),
+                      "Transactions: ${blocks[index].fullBody.transactions.length}"),
                 ],
               ),
             ),
