@@ -1,7 +1,6 @@
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/interpreters/in_memory_store.dart';
 import 'package:bifrost_consensus/utils.dart';
-import 'package:bifrost_persistence/header_store.dart';
 import 'package:brambl/brambl.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:fpdart/fpdart.dart';
@@ -51,7 +50,7 @@ class DataStores {
       parentChildTree: makeDb(),
       currentEventIds: makeDb(),
       slotData: makeDb(),
-      headers: (await HeaderStore.create()).store,
+      headers: makeDb(),
       bodies: makeDb(),
       transactions: makeDb(),
       spendableBoxIds: makeDb(),

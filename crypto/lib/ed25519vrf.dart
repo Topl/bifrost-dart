@@ -8,10 +8,10 @@ import 'package:fpdart/fpdart.dart';
 abstract class Ed25519VRF {
   Future<Ed25519VRFKeyPair> generateKeyPair();
   Future<Ed25519VRFKeyPair> generateKeyPairFromSeed(List<int> seed);
-  Future<List<int>> getVerificationKey(List<int> secretKey);
+  Future<Uint8List> getVerificationKey(List<int> secretKey);
   Future<bool> verify(List<int> signature, List<int> message, List<int> vk);
-  Future<List<int>> sign(List<int> sk, List<int> message);
-  Future<Int8List> proofToHash(List<int> signature);
+  Future<Uint8List> sign(List<int> sk, List<int> message);
+  Future<Uint8List> proofToHash(List<int> signature);
 }
 
 /**
@@ -47,17 +47,17 @@ class Ed25519VRFImpl extends Ed25519VRF {
     assert(seed.length == 32);
     final sk = (await _sha512Signed(seed)).sublist(0, 32);
     final vk = await getVerificationKey(sk);
-    return Ed25519VRFKeyPair(sk: sk, vk: vk);
+    return Ed25519VRFKeyPair(sk: Uint8List.fromList(sk), vk: vk);
   }
 
-  Future<List<int>> getVerificationKey(List<int> secretKey) async {
+  Future<Uint8List> getVerificationKey(List<int> secretKey) async {
     assert(secretKey.length == 32);
     final h = await _sha512Signed(secretKey);
     final s = Int8List(ec.SCALAR_BYTES);
     ec.pruneScalar(h, 0, s);
     final vk = Int8List(32);
     ec.scalarMultBaseEncoded(s, vk, 0);
-    return vk;
+    return Uint8List.fromList(vk);
   }
 
   Future<bool> verify(
@@ -105,7 +105,7 @@ class Ed25519VRFImpl extends Ed25519VRF {
     return c.sameElements(cp);
   }
 
-  Future<List<int>> sign(List<int> sk, List<int> message) async {
+  Future<Uint8List> sign(List<int> sk, List<int> message) async {
     assert(sk.length == 32);
     final x = await _pruneHash(sk);
     final pk = ec.createScalarMultBaseEncoded(x);
@@ -128,10 +128,10 @@ class Ed25519VRFImpl extends Ed25519VRF {
     ec.encodePoint(gamma, gamma_str, 0);
     final pi = gamma_str + c.sublist(0, C_BYTES) + s;
     assert(pi.length == PI_BYTES);
-    return pi;
+    return Uint8List.fromList(pi);
   }
 
-  Future<Int8List> proofToHash(List<int> signature) async {
+  Future<Uint8List> proofToHash(List<int> signature) async {
     assert(signature.length == 80);
     final gamma_str = Int8List.fromList(signature.sublist(0, ec.POINT_BYTES));
     final zero = [0x00];
@@ -149,7 +149,7 @@ class Ed25519VRFImpl extends Ed25519VRF {
       ..addAll(three)
       ..addAll(cg_enc)
       ..addAll(zero);
-    return await _sha512Signed(input);
+    return await _sha512Unsigned(input);
   }
 
   _pruneHash(List<int> s) async {
@@ -234,11 +234,16 @@ class Ed25519VRFImpl extends Ed25519VRF {
     final o1 = (await Sha512().hash(input)).bytes;
     return Uint8List.fromList(o1).int8List;
   }
+
+  Future<Uint8List> _sha512Unsigned(List<int> input) async {
+    final o1 = (await Sha512().hash(input)).bytes;
+    return Uint8List.fromList(o1);
+  }
 }
 
 class Ed25519VRFKeyPair {
-  final List<int> sk;
-  final List<int> vk;
+  final Uint8List sk;
+  final Uint8List vk;
 
   Ed25519VRFKeyPair({required this.sk, required this.vk});
 }
@@ -268,15 +273,15 @@ class Ed25519VRFIsolated extends Ed25519VRF {
       _compute(_generateKeyPairFromSeed, seed);
 
   @override
-  Future<List<int>> getVerificationKey(List<int> secretKey) =>
+  Future<Uint8List> getVerificationKey(List<int> secretKey) =>
       _compute(_getVerificationKey, secretKey);
 
   @override
-  Future<Int8List> proofToHash(List<int> signature) =>
+  Future<Uint8List> proofToHash(List<int> signature) =>
       _compute(_proofToHash, signature);
 
   @override
-  Future<List<int>> sign(List<int> sk, List<int> message) =>
+  Future<Uint8List> sign(List<int> sk, List<int> message) =>
       _compute((t) => _sign(t.first, t.second), Tuple2(sk, message));
 
   @override

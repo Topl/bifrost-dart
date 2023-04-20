@@ -36,8 +36,6 @@ dependencies:
     path: ../ledger
   bifrost_crypto:
     path: ../crypto
-  bifrost_persistence:
-    path: ../persistence
   brambl:
     path: ../brambl
 dev_dependencies:    

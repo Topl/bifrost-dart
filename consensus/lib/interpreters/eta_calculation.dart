@@ -1,10 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/algebras/clock_algebra.dart';
 import 'package:bifrost_common/utils.dart';
 import 'package:bifrost_common/models/common.dart';
 import 'package:bifrost_consensus/algebras/eta_calculation_algebra.dart';
 import 'package:bifrost_consensus/utils.dart';
-import 'package:bifrost_crypto/utils.dart';
 import 'package:logging/logging.dart';
 import 'package:topl_protobuf/consensus/models/block_id.pb.dart';
 import 'package:topl_protobuf/consensus/models/slot_data.pb.dart';
@@ -77,12 +78,12 @@ class EtaCalculationArgs {
 
   EtaCalculationArgs(this.previousEta, this.epoch, this.rhoNonceHashValues);
 
-  List<int> get eta {
+  Uint8List get eta {
     final bytes = <int>[]
       ..addAll(previousEta)
       ..addAll(epoch.toBigInt.bytes);
     rhoNonceHashValues.forEach(bytes.addAll);
 
-    return blake2b256.convert(bytes).bytes.int8List;
+    return blake2b256.convert(bytes).bytes;
   }
 }

@@ -14,11 +14,9 @@ extension Uint8ListOps on Uint8List {
 }
 
 extension ListIntOps on List<int> {
-  Future<List<int>> get hash256 async =>
-      blake2b256.convert(this).bytes.int8List;
+  Future<Uint8List> get hash256 async => blake2b256.convert(this).bytes;
 
-  Future<List<int>> get hash512 async =>
-      blake2b512.convert(this).bytes.int8List;
+  Future<Uint8List> get hash512 async => blake2b512.convert(this).bytes;
 }
 
 // Alias's Flutter's "compute()" function signature

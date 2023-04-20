@@ -1,9 +1,9 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:bifrost_codecs/codecs.dart';
 import 'package:bifrost_common/models/common.dart';
 import 'package:bifrost_common/utils.dart';
 import 'package:bifrost_crypto/ed25519vrf.dart';
-import 'package:bifrost_crypto/utils.dart';
 import 'package:hashlib/hashlib.dart';
 import 'package:rational/rational.dart';
 import 'package:topl_protobuf/consensus/models/block_header.pb.dart';
@@ -13,15 +13,14 @@ final TestStringArray = utf8.encode("TEST");
 final NonceStringArray = utf8.encode("NONCE");
 
 extension RhoOps on Rho {
-  List<int> get rhoTestHash =>
-      blake2b512.convert(this + TestStringArray).bytes.int8List;
-  List<int> get rhoNonceHash =>
-      blake2b512.convert(this + NonceStringArray).bytes.int8List;
+  Uint8List get rhoTestHash => blake2b512.convert(this + TestStringArray).bytes;
+  Uint8List get rhoNonceHash =>
+      blake2b512.convert(this + NonceStringArray).bytes;
 }
 
 extension RatioOps on Rational {
-  List<int> get thresholdEvidence =>
-      blake2b256.convert(numerator.bytes + denominator.bytes).bytes.int8List;
+  Uint8List get thresholdEvidence =>
+      blake2b256.convert(numerator.bytes + denominator.bytes).bytes;
 }
 
 extension BlockHeaderOps on BlockHeader {

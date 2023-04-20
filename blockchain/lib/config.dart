@@ -66,7 +66,7 @@ class BlockchainConsensus {
     int? kesKeyHours,
     int? kesKeyMinutes,
   })  : fEffective = fEffective ?? Rational.fromInt(15, 100),
-        vrfLddCutoff = vrfLddCutoff ?? 15,
+        vrfLddCutoff = vrfLddCutoff ?? 50,
         vrfPrecision = vrfPrecision ?? 40,
         vrfBaselineDifficulty =
             vrfBaselineDifficulty ?? Rational.fromInt(1, 20),
