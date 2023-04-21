@@ -9,7 +9,7 @@ import 'package:topl_protobuf/consensus/models/block_id.pb.dart';
 import 'package:topl_protobuf/genus/genus_rpc.pbgrpc.dart';
 import 'package:topl_protobuf/node/models/block.pb.dart';
 
-class GenusFullBlockGrpc extends GenusFullBlockServiceBase {
+class GenusFullBlockGrpc extends BlockServiceBase {
   final Future<BlockHeader?> Function(BlockId) _fetchHeader;
   final Future<BlockBody?> Function(BlockId) _fetchBody;
   final Future<IoTransaction?> Function(TransactionId) _fetchTransaction;

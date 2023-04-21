@@ -6,7 +6,7 @@ import 'package:topl_protobuf/node/services/bifrost_rpc.pbgrpc.dart';
 
 class RpcServices {
   final NodeRpcServiceBase node;
-  final GenusFullBlockServiceBase genusFullBlock;
+  final BlockServiceBase genusFullBlock;
   final GenusTransactionGrpc genusTransactionGrpc;
 
   RpcServices(this.node, this.genusFullBlock, this.genusTransactionGrpc);
