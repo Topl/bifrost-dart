@@ -1,8 +1,6 @@
-import 'dart:ffi';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:bifrost_crypto/utils.dart';
 import 'package:cryptography/cryptography.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:fpdart/fpdart.dart';

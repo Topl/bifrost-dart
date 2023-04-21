@@ -73,8 +73,8 @@ class _BlockchainPageState extends State<BlockchainPage> {
 
     Future<void> launch() async {
       await _flutterBackgroundInit();
-      final blockchain =
-          await Blockchain.init(BlockchainConfig.defaultConfig, _isolate);
+      final blockchain = await Blockchain.init(
+          BlockchainConfig(rpc: BlockchainRpc(enable: !kIsWeb)), _isolate);
       blockchain.run();
       setState(() => this.blockchain = blockchain);
       return;

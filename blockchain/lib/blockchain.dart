@@ -230,37 +230,39 @@ class Blockchain {
               validators.bodySemantic, validators.bodyAuthorization)),
     );
 
-    log.info("Preparing RPC Server");
+    if (config.rpc.enable) {
+      log.info("Preparing RPC Server");
 
-    final blockHeightTree = BlockHeightTree(
-      dataStores.blockHeightTree,
-      await currentEventIdGetterSetters.blockHeightTree.get(),
-      dataStores.slotData,
-      parentChildTree,
-      currentEventIdGetterSetters.blockHeightTree.set,
-    );
+      final blockHeightTree = BlockHeightTree(
+        dataStores.blockHeightTree,
+        await currentEventIdGetterSetters.blockHeightTree.get(),
+        dataStores.slotData,
+        parentChildTree,
+        currentEventIdGetterSetters.blockHeightTree.set,
+      );
 
-    final rpcServices = RpcServices(
-      NodeGrpc(
-        dataStores.headers.get,
-        dataStores.bodies.get,
-        dataStores.transactions,
-        localChain,
-        mempool,
-        validators.transactionSyntax.validate,
-        blockHeightTree,
-      ),
-      GenusFullBlockGrpc(
-        dataStores.headers.get,
-        dataStores.bodies.get,
-        dataStores.transactions.get,
-        localChain,
-        blockHeightTree,
-      ),
-      GenusTransactionGrpc(dataStores.transactions.get),
-    );
+      final rpcServices = RpcServices(
+        NodeGrpc(
+          dataStores.headers.get,
+          dataStores.bodies.get,
+          dataStores.transactions,
+          localChain,
+          mempool,
+          validators.transactionSyntax.validate,
+          blockHeightTree,
+        ),
+        GenusFullBlockGrpc(
+          dataStores.headers.get,
+          dataStores.bodies.get,
+          dataStores.transactions.get,
+          localChain,
+          blockHeightTree,
+        ),
+        GenusTransactionGrpc(dataStores.transactions.get),
+      );
 
-    await rpcServices.serve(config.rpc.bindHost, config.rpc.bindPort);
+      await rpcServices.serve(config.rpc.bindHost, config.rpc.bindPort);
+    }
 
     log.info("Blockchain Initialized");
 

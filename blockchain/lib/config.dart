@@ -91,10 +91,12 @@ class BlockchainConsensus {
 }
 
 class BlockchainRpc {
+  final bool enable;
   final String bindHost;
   final int bindPort;
 
-  BlockchainRpc({String? bindHost, int? bindPort})
-      : bindHost = bindHost ?? "0.0.0.0",
+  BlockchainRpc({bool? enable, String? bindHost, int? bindPort})
+      : enable = enable ?? true,
+        bindHost = bindHost ?? "0.0.0.0",
         bindPort = bindPort ?? 9084;
 }
